@@ -1,0 +1,216 @@
+:sectnums:
+:toc:
+:toclevels: 4
+:sectnumlevels: 4
+:title-page:
+
+= TLSRPT for MTAs - API documentation of the C library
+Version 0.01
+2024-06-03
+
+== Error handling
+
+The TLSRPT C library API functions return an integer errorcode, except for `tlsrpt_cancel_delivery_request` which returns `void`.
+
+On success the return value is 0.
+
+The error codes are grouped in different number blocks.
+
+Errors resulting from system calls or calls to standard libc functions usually set the `errno` variable to give information about the exact error.
+The TLSRPT C library functions add this value of `errno` to a constant denoting the system call or standard libc function and the TLSRPT library function the error occured in to give fine-granular error indicators.
+These returned error codes are purely for informative purpose in log files.
+
+The errno-Value part can be extracted with the `tlsrpt_errno_from_error_code` function.
+
+In case of a failure within the library itself, for example due to a missing call to start a policy, the returned error code is from the ERR_TLSRPT block.
+
+
+After an error occured, that delivery request cannot be recovered again and won´t be sent out.
+
+The `struct tlsrpt_dr_t ` can be re-used by calling `tlsrpt_init_delivery_request` again on it, but this will result in a new delivery request starting from scratch.
+
+In case of an error within an delivery request it is still mandatory to clean up by a call to `tlsrpt_finish_delivery_request` or `tlsrpt_cancel_delivery_request`, even if it is to be re-used.
+The initializing function  `tlsrpt_init_delivery_request` must assume the structure to contains random data and cannot detect if there are left-overs from earlier usage to be cleaned up.
+
+NOTE: This is also true for the `tlsrpt_init_delivery_request` itself!
+If `tlsrpt_init_delivery_request` returns an error, `tlsrpt_finish_delivery_request` or `tlsrpt_cancel_delivery_request` still have to be called to clean up ressources.
+
+It is safe to just keep on processing in case of errors. No data will be reported to the TLSRPT receiver due to the errors occured, but the TLSRPT C library functions take care to not use uninitialized internal objects or to dereference NULL pointers during a normal flow of operations.
+
+
+
+== API functions
+The API functions are layered and the functions that initialize and finish objects must always be called properly paired.
+
+On the outermost layer, failing to properly pair calls to `tlsrpt_open` and `tlsrpt_close` will leak ressources like an open socket file descriptor.
+
+Failing to properly pair calls to `tlsrpt_init_delivery_request` with either `tlsrpt_finish_delivery_request` or `tlsrpt_cancel_delivery_request` will result in memory leaks.
+
+Within a delivery request, failing to properly pair calls to `tlsrpt_init_policy` and `tlsrpt_finish_policy` will not leak ressources as long as `tlsrpt_finish_delivery_request` is called, however `tlsrpt_finish_delivery_request` will notice a policy was not properly finished. This is an internal library error caused by a missing call to `tlsrpt_finish_policy` and causes the delivery request to not be reported to the TLSRPT receiver at all.
+
+
+
+=== Connection handling
+
+The `struct tlsrpt_connection_t` object contains a socket and the destination socket address of the TLSRPT receiver.
+It can be opened and close individually for a single delivery request, or it can be opened once at program start and re-used for many even concurrent delivery requests.
+
+Calls to `tlsrpt_open` and `tlsrpt_close` should be properly paired to avoid ressource leaks.
+
+==== `tlsrpt_open`
+Parameters:::
+ struct tlsrpt_connection_t* dr::  The connection object to be initialized
+ const char* socketname:: THe name of the TLSRPT receiver socket accepting datagrams from this library
+
+The function `tlsrpt_open` initializes the `struct tlsrpt_connection_t` object.
+This function merely creates the socket and initializes the destination socket address of the TLSRPT receiver.
+There is no actual connection internally, the socket is a connection-less datagram socket.
+
+==== `tlsrpt_close`
+Parameters:::
+ struct tlsrpt_connection_t* dr::  The connection object to be closed
+
+The function `tlsrpt_close` closes the socket and resets the destination socket address to all zero bytes.
+
+
+=== Delivery request
+
+The delivery request object is the central part of this library.
+It is composed via various function calls till it finally gets finished or cancelled.
+
+==== `tlsrpt_init_delivery_request`
+Parameters:::
+ struct tlsrpt_dr_t* dr::  The delivery request to be initialized
+ struct tlsrpt_connection_t* con:: A pointer to the `struct tlsrpt_connection_t` object prepared earlier by a call to `tlsrpt_open`
+ const char* domainname:: The recipient domain name of the email to be delivered
+
+The `tlsrpt_init_delivery_request` function initializes the `struct tlsrpt_dr_t` object.
+The ressources it allocates must be freed by calling either `tlsrpt_finish_delivery_request` or `tlsrpt_cancel_delivery_request`.
+
+==== `tlsrpt_finish_delivery_request`
+Parameters:::
+ struct tlsrpt_dr_t* dr::  The delivery request to be finished and sent out
+
+The `tlsrpt_finish_delivery_request` function finishes the delivery request `dr` and if no errors have occured sends it as a datagram to the TLSRPT receiver.
+
+The delivery request`s internal error status is set to ERR_TLSRPT_ALREADYSENT when the `sendto` system call was successful, and is set to the respective error if `sendto` failed.
+That means the internal state is no longer an error-free zero value after a call to `tlsrpt_finish_delivery_request`, but the return value of `tlsrpt_finish_delivery_request` will be zero when the sending was sucessful.
+
+A subsequent second call to `tlsrpt_finish_delivery_request` will fail and won`t send out the datagram a second time.
+
+==== `tlsrpt_cancel_delivery_request`
+Parameters:::
+ struct tlsrpt_dr_t* dr::  The delivery request to be cancelled
+
+The `tlsrpt_cancel_delivery_request` function marks the delivery request as having encountered an internal library "dummy error" `ERR_TLSRPT_CANCELLED` to prevent it from being sent out.
+It then calls `tlsrpt_finish_delivery_request`, wich will do all the clean-up of used ressources.
+
+A subsequent call to `tlsrpt_finish_delivery_request` is allowed but useless, because it is already called from within `tlsrpt_cancel_delivery_request`.
+
+
+=== Policies
+
+Multiple policies can be part of one delivery request and can have different results provided in their `tlsrpt_finish_policy` calls.
+One delviery request can fail accporidng to one policy but still be successful accoridng to a different policy.
+Finishing a delivery request without any policies at all is considered an error and no datagram will be reported to the TLSRPT receiver.
+
+Policies can not be nested!
+Calling `tlsrpt_init_policy` a second time without a call to `tlsrpt_finish_policy` inbetween will result in `ERR_TLSRPT_NESTEDPOLICY`.
+
+==== `tlsrpt_init_policy`
+Parameters:::
+ struct tlsrpt_dr_t* dr::  The delivery request for which to define a new policy
+ tlsrpt_policy_type_t policy_type:: The type of the new policy
+* const char* policydomainname:: The domain name relevant for this policy, usually the ame as the domain name used in `tlsrpt_init_delivery_request`, but can be different in some scenarios as mentioned in RFC 8460
+
+The `tlsrpt_init_policy` function initializes a new policy within an existing delivery request.
+A delivery request must contain at least one policy.
+
+The policy must be properly completed by calls to some of the following functions and a final call to `tlsrpt_finish_policy`.
+
+NOTE: An unfinished policy after some properly finished policies will result in the whole delivery request datagram to fail and not being sent out at all, so the other already completed policies won´t be reported either!
+
+==== `tlsrpt_finish_policy`
+Parameters:::
+ struct tlsrpt_dr_t* dr::  The delivery request containing the policy to be finished
+ tlsrpt_final_result_t final_result:: The final result of this delivery request regarding this policy
+
+The `tlsrpt_finish_policy` function finishes a policy within a delivery request.
+It frees all the ressources allocated by `tlsrpt_init_policy`.
+Every call to `tlsrpt_init_policy` must be matched by a call to `tlsrpt_finish_policy`!
+
+NOTE: No plausibility checks are done by the library regarding the number of failures added to this policy and the final result.
+It is just as well possible to finish a poliy as `TLSRPT_FINAL_FAILURE` with no failures added at all, as it is possible to finish a poliy as `TLSRPT_FINAL_SUCCESS` with one or more failures added.
+
+
+==== Policy details
+These functions are used to describe the policy and failures that might have occured during the delivery request.
+The definition of a policy including all required policy strings and MX host patterns is necessary even in case of successful delivery.
+Calls to `tlsrpt_add_delivery_request_failure` are not required when there is no failure to be reported.
+
+Calls to `tlsrpt_add_policy_string`, `tlsrpt_add_mx_host_pattern` and  `tlsrpt_add_delivery_request_failure` can be mixed arbitrarily if needed.
+They work internally each on their own memstream which gets closed and aggregated into the datagram only at the final call to `tlsrpt_finish_policy`.
+
+
+===== `tlsrpt_add_policy_string`
+Parameters:::
+ struct tlsrpt_dr_t* dr::  The delivery request containing the policy to be defined
+ const char* policy_string:: A policy string needed to define the policy according to RFC 8640
+
+The `tlsrpt_add_policy_string` function adds a policy string to describe the current policy.
+Multiple policy strings can be added within one policy.
+
+===== `tlsrpt_add_mx_host_pattern`
+Parameters:::
+ struct tlsrpt_dr_t* dr::  The delivery request containing the policy to be defined
+ const char* mx_host_pattern:: A MX host pattern needed to define the policy according to RFC 8640
+
+The `tlsrpt_add_mx_host_pattern` function adds a MX host pattern to the current policy.
+Multiple MX host patterns can be added within a policy.
+
+===== `tlsrpt_add_delivery_request_failure`
+Parameters:::
+ struct tlsrpt_dr_t* dr::  The delivery request  containing the policy to be defined
+ tlsrpt_failure_t failure_code:: The failure code, an enum
+ const char* sending_mta_ip:: the sending MTA´s IP adress
+ const char* receiving_mx_hostname::  the receiving MTA´s MX hostname
+ const char* receiving_mx_helo:: the receiving MTA´s HELO response
+ const char* receiving_ip:: the receiving MTA´s IP address
+ const char* additional_information:: additional informations as defined in RFC 8640
+ const char* failure_reason_code:: additional informations as defined in RFC 8640
+
+The `tlsrpt_add_delivery_request_failure` function adds a failure to the current policy.
+Multiple failures can be added within a policy.
+
+Some of the parameters may be NULL and in this case will be ommitted in the datagram.
+
+
+== Development functions
+
+In addition to the actual API in this section additional functions are documented which mainly are useful for development and performance testing.
+
+=== Controlling blocking behaviour of sendto
+
+The functions listed in this chapter change low-level details within the library.
+They are not needed for normal production code, but are useful for several development and testing purposes, for example to test high-load scenarios without losing datagrams.
+
+NOTE: This is currently a global setting!
+If the need arises, this might be turned into a property of `struct tlsrpt_dr_t` in the future to have blocking and non-blocking delivery requests in the same program. This would need a change of the API of these two functions, but not of the productive API described above.
+
+==== `tlsrpt_set_blocking`
+Changes the `sendto` call within `tlsrpt_finish_delivery_request` to be blocking.
+The default is non-blocking.
+
+==== `tlsrpt_set_nonblocking`
+Restores the `sendto` call within `tlsrpt_finish_delivery_request` to its default non-blocking behaviour.
+
+
+=== Error code inspection
+==== `tlsrpt_errno_from_error_code`
+Parameters:::
+ int errorcode:: the error code returned from any of the tlsrpt C library API functions
+
+The `tlsrpt_errno_from_error_code` function returns the `errno` part of an errorcode.
+In case of internal library errors from the ERR_TLSRPT block the returned value will be a high number to avoid clashes with existing errno values.
+I.e. `ERR_TLSRPT_ALREADYSENT` is 10701 instead of 10001 to avoid the errno part being decoded as `EPERM`.
+

@@ -1,0 +1,58 @@
+#include <stdlib.h>
+#include <time.h>
+#include "tlsrpt.h"
+
+#define SOCKET_NAME "/tmp/tlsrpt-receiver.socket"
+
+void* specialmalloc(size_t size) {
+  fprintf(stderr,"specialmalloc(%ld)\n",size);
+  return malloc(size);
+}
+
+void specialfree(void* p) {
+  fprintf(stderr,"specialfree()\n");
+  free(p);
+}
+
+void testrun() {
+  int res=0;
+
+  tlsrpt_connection_t *con=tlsrpt_open(SOCKET_NAME);
+
+  const char* domain="example.com";
+
+  struct tlsrpt_dr_t *dr=tlsrpt_init_delivery_request(con, domain);
+  tlsrpt_init_policy(dr, TLSRPT_POLICY_STS , "company-y.example");
+  tlsrpt_add_policy_string(dr,"version: STSv1");
+  tlsrpt_add_policy_string(dr,"mode: testing");
+  tlsrpt_add_policy_string(dr,"mx: *.mail.company-y.example");
+  tlsrpt_add_policy_string(dr,"max_age: 86400");
+  tlsrpt_add_mx_host_pattern(dr,"*.mail.company-y.example");
+  tlsrpt_add_delivery_request_failure(dr, TLSRPT_STS_POLICY_INVALID, "1.2.3.4", "mailin.example.com", "test-ehlo.example.com", "11.22.33.44", "This is additional information", "999 TEST REASON CODE");
+  tlsrpt_add_delivery_request_failure(dr, TLSRPT_STS_WEBPKI_INVALID, "1.2.3.5", "mailin.example.com", "test-ehlo.example.com", "11.22.33.55", "This is additional information", "123 ANOTHER TEST REASON CODE");
+  tlsrpt_finish_policy(dr, TLSRPT_FINAL_FAILURE);
+  res = tlsrpt_finish_delivery_request(dr);
+
+  printf("Result code is %d\n", res);
+  
+  tlsrpt_close(con);
+
+}
+
+int main(int argc, char *argv[])
+{
+  fprintf(stderr,"\nNormal test\n");  
+  testrun();
+
+  /* tlsrpt_set_malloc_and_free(testmalloc, testfree must usually be called before any other tlsrpt function!
+     Here we call it in the middle of the program to show its effect only because we are sure there are no objects left that were allocated by a different malloc implementation */
+  tlsrpt_set_malloc_and_free(specialmalloc, specialfree); 
+  fprintf(stderr,"\nTest with special malloc implementation\n");
+  testrun();
+
+  tlsrpt_set_malloc_and_free(malloc, free);
+  fprintf(stderr,"\nNormal test again\n");
+  testrun();
+
+  return 0;
+}
