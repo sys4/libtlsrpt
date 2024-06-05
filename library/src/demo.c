@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
 #include "tlsrpt.h"
@@ -17,7 +18,7 @@ void specialfree(void* p) {
 void testrun() {
   int res=0;
 
-  tlsrpt_connection_t *con=tlsrpt_open(SOCKET_NAME);
+  struct tlsrpt_connection_t *con=tlsrpt_open(SOCKET_NAME);
 
   const char* domain="example.com";
 

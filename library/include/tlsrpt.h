@@ -7,8 +7,6 @@ extern "C" {
 
 #include <stdlib.h>
   
-/* public part - the API */
-
 #define TLSRPT_MAXDOMAINNAMELEN 256
 
 typedef enum {
@@ -77,54 +75,9 @@ int tlsrpt_add_delivery_request_failure(struct tlsrpt_dr_t* dr, tlsrpt_failure_t
  const char* additional_information,
  const char* failure_reason_code);
 
-
 /* Extract the errno from an error code return by any of t tlsrpt library functions
 */
 int tlsrpt_errno_from_error_code(int errorcode);
-
-  
-/* private part - the implementation */
-/* needed here for the compiler to learn about the structs but users should not access struct members */
-
-#include <stdio.h>
-#include <sys/un.h>
-
-typedef struct tlsrpt_connection_t {
-  struct sockaddr_un addr;
-  int sock_fd; /* file descriptor of socket */
-} tlsrpt_connection_t;
-
-typedef struct tlsrpt_dr_t {
-  struct tlsrpt_connection_t *con;
-  int status;
-  int failure_count;
-  int policy_count;
-
-  /* main memstream */
-  FILE *memstream;
-  char *memstreambuffer;
-  size_t memstreamsize;
-
-  /* sub-memstream for policy strings */
-  FILE *memstreamps;
-  char *memstreambufferps;
-  size_t memstreamsizeps;
-  const char* separatorps;
-
-  /* sub-memstream for mx host patterns */
-  FILE *memstreammx;
-  char *memstreambuffermx;
-  size_t memstreamsizemx;
-  const char* separatormx;
-
-  /* sub-memstream for failure details */
-  FILE *memstreamfd;
-  char *memstreambufferfd;
-  size_t memstreamsizefd;
-  const char* separatorfd;
-
-  tlsrpt_policy_type_t policy_type;
-} tlsrpt_dr_t;
 
 /* Debug and development tools */
 void tlsrpt_set_blocking();
