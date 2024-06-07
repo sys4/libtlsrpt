@@ -27,7 +27,7 @@
 
 #define SOCKET_NAME "/tmp/tlsrpt-receiver.socket"
 
-tlsrpt_connection_t* con;
+tlsrpt_connection_t* con=NULL;
 
 //compare global socket vs individual sockets
 #ifdef INDVIDUALSOCKETS
@@ -50,8 +50,9 @@ int main(int argc, char *argv[])
     exit(1);
   }
   Rate rate;
-  int res=-1;
-  con=tlsrpt_open(SOCKET_NAME);
+  int res=0;
+  res=tlsrpt_open(&con, SOCKET_NAME);
+  CHECK;
   tlsrpt_set_blocking();
   int i=0;
   int runs=atoi(argv[1]);
@@ -75,9 +76,9 @@ int main(int argc, char *argv[])
 
     tlsrpt_final_result_t polresult=tlsrpt_final_result_t((i/16)%2);
 
-    struct tlsrpt_dr_t *dr;
+    struct tlsrpt_dr_t *dr=NULL;
     SOCKOPENINNER
-    dr = tlsrpt_init_delivery_request(con, domain);
+    res = tlsrpt_init_delivery_request(&dr, con, domain);
     CHECK;
 
     int pol=forcepol>=0?forcepol:i;

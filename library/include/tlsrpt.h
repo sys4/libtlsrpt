@@ -66,16 +66,13 @@ typedef enum {
 struct tlsrpt_connection_t;
 struct tlsrpt_dr_t;
 
-/* Chosing a different malloc implementation */
-void tlsrpt_set_malloc_and_free(void* (*malloc_function)(size_t size), void (*free_function)(void *ptr));
-
 /* Handling of the connection */
-struct tlsrpt_connection_t* tlsrpt_open(const char* socketname);
-void tlsrpt_close(struct tlsrpt_connection_t* con);
+int tlsrpt_open(struct tlsrpt_connection_t** pcon, const char* socketname);
+int tlsrpt_close(struct tlsrpt_connection_t* con);
 
 /* Handling of a single delivery request, an open connection is required */
-struct tlsrpt_dr_t* tlsrpt_init_delivery_request(struct tlsrpt_connection_t* con, const char* domainname);
-void tlsrpt_cancel_delivery_request(struct tlsrpt_dr_t* dr);
+int tlsrpt_init_delivery_request(struct tlsrpt_dr_t** pdr, struct tlsrpt_connection_t* con, const char* domainname);
+int tlsrpt_cancel_delivery_request(struct tlsrpt_dr_t* dr);
 int tlsrpt_finish_delivery_request(struct tlsrpt_dr_t* dr);
 
 /* Handling of a policy within a delivery request, an initialized delivery request object is required */
@@ -101,6 +98,9 @@ int tlsrpt_errno_from_error_code(int errorcode);
 /* Debug and development tools */
 void tlsrpt_set_blocking();
 void tlsrpt_set_nonblocking();
+
+/* Chosing a different malloc implementation */
+void tlsrpt_set_malloc_and_free(void* (*malloc_function)(size_t size), void (*free_function)(void *ptr));
 
 #ifdef __cplusplus
 }

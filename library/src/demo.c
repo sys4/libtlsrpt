@@ -37,11 +37,13 @@ void specialfree(void* p) {
 void testrun() {
   int res=0;
 
-  struct tlsrpt_connection_t *con=tlsrpt_open(SOCKET_NAME);
+  struct tlsrpt_connection_t *con=NULL;
+  tlsrpt_open(&con, SOCKET_NAME);
 
   const char* domain="example.com";
 
-  struct tlsrpt_dr_t *dr=tlsrpt_init_delivery_request(con, domain);
+  struct tlsrpt_dr_t *dr=NULL;
+  tlsrpt_init_delivery_request(&dr, con, domain);
   tlsrpt_init_policy(dr, TLSRPT_POLICY_STS , "company-y.example");
   tlsrpt_add_policy_string(dr,"version: STSv1");
   tlsrpt_add_policy_string(dr,"mode: testing");

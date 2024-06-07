@@ -90,6 +90,8 @@ All TLSRPT function return 0 on success or an individual error code:
 #define ERR_FPRINTF_FINISHPOLICY 35000
 #define ERR_FPRINTF_ADDFAILURE 36000
 #define ERR_FPRINTF_FINISHDR 37000
+#define ERR_MALLOC_OPENCON 41000
+#define ERR_MALLOC_OPENDR 42000
 
 
 /* 
@@ -124,11 +126,6 @@ int tlsrpt_errno_from_error_code(int errorcode) {
 
 #define RETURN_ON_EXISTING_ERRORS  if(dr->status != 0) return ERR_TLSRPT_ALREADYFAILED;
 
-static void __attribute__ ((unused)) die(const char* msg) {
-  fprintf(stderr,"ERROR: %s\n",msg);
-  exit(2);
-}
-
 
 /* allow for a different malloc implementation */
 void* (*tlsrpt_malloc)(size_t size) = malloc;
@@ -142,10 +139,8 @@ void tlsrpt_set_malloc_and_free(void* (*malloc_function)(size_t size), void (*fr
 
 static int json_escape(FILE* file, const char* s) {
   for(const unsigned char *c=(unsigned char*)s; *c!=0; ++c) {
-    // DEBUG if((json_escape_values[*c][0])==*c) fprintf(stderr, "_%d ",(int)(*c)); else fprintf(stderr, ">%d ",(int)(*c));
     if(fprintf(file,"%s",tlsrpt_json_escape_values[*c])<0) return -1;
   }
-  // DEBUG fprintf(stderr, "EOL\n");
   return 0;
 }
 
@@ -206,18 +201,25 @@ static int _tlsrpt_close(struct tlsrpt_connection_t* con) {
   return 0;
 }
 
-struct tlsrpt_connection_t* tlsrpt_open(const char* socketname) {
+int tlsrpt_open(struct tlsrpt_connection_t** pcon, const char* socketname) {
+  *pcon=NULL;
   struct tlsrpt_connection_t* ptr=(struct tlsrpt_connection_t*)tlsrpt_malloc(sizeof(struct tlsrpt_connection_t));
+  if(ptr==NULL) return ERR_MALLOC_OPENCON+errno;
+
   int res=_tlsrpt_open(ptr, socketname);
-  if(res==0) return ptr;
+  if(res==0) {
+    *pcon=ptr;
+    return 0;
+  }
   // clean up
   tlsrpt_close(ptr);
-  return NULL;
+  return res;
 }
 
-void tlsrpt_close(struct tlsrpt_connection_t* con) {
-  _tlsrpt_close(con);
+int tlsrpt_close(struct tlsrpt_connection_t* con) {
+  int res = _tlsrpt_close(con);
   tlsrpt_free(con);
+  return res;
 }
 
 /* Index of json keys
@@ -524,18 +526,25 @@ Calls to errorcode will record the errorcode in the tlsrpt_dr_t structure, but t
 }
 
 
-struct tlsrpt_dr_t* tlsrpt_init_delivery_request(struct tlsrpt_connection_t* con, const char* domainname) {
+int tlsrpt_init_delivery_request(struct tlsrpt_dr_t** pdr, struct tlsrpt_connection_t* con, const char* domainname) {
+  *pdr=NULL;
   struct tlsrpt_dr_t* ptr=(struct tlsrpt_dr_t*)tlsrpt_malloc(sizeof(struct tlsrpt_dr_t));
+  if(ptr==NULL) return ERR_MALLOC_OPENDR+errno;
+
   int res=_tlsrpt_init_delivery_request(ptr, con, domainname);
-  if(res==0) return ptr;
+  if(res==0) {
+    *pdr=ptr;
+    return 0;
+  }
   // clean up
   tlsrpt_cancel_delivery_request(ptr);
-  return NULL;
+  return res;
 }
 
-void tlsrpt_cancel_delivery_request(struct tlsrpt_dr_t* dr) {
+int tlsrpt_cancel_delivery_request(struct tlsrpt_dr_t* dr) {
   _tlsrpt_cancel_delivery_request(dr);
   tlsrpt_free(dr);
+  return 0;
 }
 
 int tlsrpt_finish_delivery_request(struct tlsrpt_dr_t* dr) {
