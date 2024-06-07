@@ -25,5 +25,7 @@ LDLIBS += ../library/src/libtlsrpt.a
 PROGS = bench1
 all: ${PROGS}
 
+bench1: $(LDLIBS)
+
 clean:
 	rm *.o *.a ${PROGS}

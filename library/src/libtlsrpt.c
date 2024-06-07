@@ -99,7 +99,6 @@ Error codes from the TLSRPT number block:
 We return BLOCKNR+errno, but these errors are not forwarding an errno valu from a std clib call we use intentional high numbers so that strerror(errorcode % 1000) does not give misleading results as would be the case for low-range numbers.
 */
 #define ERR_TLSRPT 10000 // the designator for the number block, unused within the library because there are no "ERR_TLSRPT+errno" errors, but can be used along with the other block designators to classify an error
-#define ERR_TLSRPT_ALREADYSENT 10701 // The datagram was already sent, tlsrpt_finish_delivery_request called twice?
 #define ERR_TLSRPT_CANCELLED 10703 // The request was cancelled via tlsrpt_cancel_delivery_request
 #define ERR_TLSRPT_SOCKETNAMETOOLONG 10711 // The name of the unix domain socket was too long
 #define ERR_TLSRPT_UNFINISHEDPOLICY 10712 // Call to tlsrpt_init_policy was not properly paired with tlsrpt_finish_policy
@@ -134,6 +133,7 @@ void tlsrpt_set_malloc_and_free(void* (*malloc_function)(size_t size), void (*fr
 }
 
 
+/* Write a JSON-escaped value to a file */
 static int json_escape(FILE* file, const char* s) {
   for(const unsigned char *c=(unsigned char*)s; *c!=0; ++c) {
     if(fprintf(file,"%s",tlsrpt_json_escape_values[*c])<0) return -1;
@@ -141,6 +141,7 @@ static int json_escape(FILE* file, const char* s) {
   return 0;
 }
 
+/* write a key/value pair with a numeric failure code value to a file */
 static int write_failure_code(FILE *file, const char* name, tlsrpt_failure_t failure_code) {
   if(fprintf(file, "\"%s\":%d", name, failure_code)<0) return -1;
   return 0;
@@ -166,7 +167,7 @@ static int write_attribute_if_not_null(FILE *file, const char* name, const char*
   return write_attribute(file, name, value);
 }
 
-static int _tlsrpt_open(struct tlsrpt_connection_t* con, const char* socketname) {
+static int tlsrpt_open_prepare_struct(struct tlsrpt_connection_t* con, const char* socketname) {
   /*  no calls to errorcode from this function because we have no tlsrpt_dr struct yet to record the error */
 
   /* Clear the whole structure */
@@ -186,16 +187,17 @@ static int _tlsrpt_open(struct tlsrpt_connection_t* con, const char* socketname)
   return 0;
 }
 
-static int _tlsrpt_close(struct tlsrpt_connection_t* con) {
+int tlsrpt_close(struct tlsrpt_connection_t* con) {
   /*  no calls to errorcode from this function because we have no tlsrpt_dr struct to record the error */
   int res = 0;
   memset(&con->addr, 0, sizeof(struct sockaddr_un));
   if(con->sock_fd!=-1) {
     res = close(con->sock_fd);
     con->sock_fd=-1;
-    if(res != 0) return ERR_CLOSE+errno;
+    if(res != 0) res=ERR_CLOSE+errno;
   }
-  return 0;
+  tlsrpt_free(con);
+  return res;
 }
 
 int tlsrpt_open(struct tlsrpt_connection_t** pcon, const char* socketname) {
@@ -203,19 +205,13 @@ int tlsrpt_open(struct tlsrpt_connection_t** pcon, const char* socketname) {
   struct tlsrpt_connection_t* ptr=(struct tlsrpt_connection_t*)tlsrpt_malloc(sizeof(struct tlsrpt_connection_t));
   if(ptr==NULL) return ERR_MALLOC_OPENCON+errno;
 
-  int res=_tlsrpt_open(ptr, socketname);
+  int res=tlsrpt_open_prepare_struct(ptr, socketname);
   if(res==0) {
     *pcon=ptr;
     return 0;
   }
   // clean up
   tlsrpt_close(ptr);
-  return res;
-}
-
-int tlsrpt_close(struct tlsrpt_connection_t* con) {
-  int res = _tlsrpt_close(con);
-  tlsrpt_free(con);
   return res;
 }
 
@@ -250,7 +246,7 @@ static void reset_sub_memstreams(tlsrpt_dr_t *dr) {
   dr->memstreamsizefd=0;
 }
 
-static int _tlsrpt_init_delivery_request(tlsrpt_dr_t *dr, tlsrpt_connection_t* con, const char* domainname) {
+static int tlsrpt_init_delivery_request_prepare_struct(tlsrpt_dr_t *dr, tlsrpt_connection_t* con, const char* domainname) {
   int res=0;
   dr->status=0;
   dr->con=con;
@@ -470,13 +466,15 @@ void debug_datagram_hook(void* data) {
 /* END DEBUG TOOLS */
 
 /* Set this request to cancelled and clean up everything by calling tlsrpt_finish_delivery_request. */
-static void _tlsrpt_cancel_delivery_request(struct tlsrpt_dr_t* dr) {
+int tlsrpt_cancel_delivery_request(struct tlsrpt_dr_t* dr) {
+  int finalresult=dr->status;
   errorcode(dr, ERR_TLSRPT_CANCELLED);
   tlsrpt_finish_delivery_request(dr);
+  return finalresult;
 }
 
 /* Finish a delivery request. Cleans up everything and only sends out the datagram if no errors were encountered. */
-static int _tlsrpt_finish_delivery_request(tlsrpt_dr_t *dr) {
+int tlsrpt_finish_delivery_request(tlsrpt_dr_t *dr) {
   /*
 Throughout this function the errorcode is never returned prematurely!
 We need to go through all steps of cleaning up.
@@ -518,35 +516,24 @@ Calls to errorcode will record the errorcode in the tlsrpt_dr_t structure, but t
 
   free(dr->memstreambuffer);
   int finalresult=dr->status;
-  errorcode(dr,ERR_TLSRPT_ALREADYSENT);
+
+  tlsrpt_free(dr);
   return finalresult;
 }
 
-
+/* Initialize a delivery request */
 int tlsrpt_init_delivery_request(struct tlsrpt_dr_t** pdr, struct tlsrpt_connection_t* con, const char* domainname) {
   *pdr=NULL;
   struct tlsrpt_dr_t* ptr=(struct tlsrpt_dr_t*)tlsrpt_malloc(sizeof(struct tlsrpt_dr_t));
   if(ptr==NULL) return ERR_MALLOC_OPENDR+errno;
 
-  int res=_tlsrpt_init_delivery_request(ptr, con, domainname);
+  int res=tlsrpt_init_delivery_request_prepare_struct(ptr, con, domainname);
   if(res==0) {
     *pdr=ptr;
     return 0;
   }
   // clean up
   tlsrpt_cancel_delivery_request(ptr);
-  return res;
-}
-
-int tlsrpt_cancel_delivery_request(struct tlsrpt_dr_t* dr) {
-  _tlsrpt_cancel_delivery_request(dr);
-  tlsrpt_free(dr);
-  return 0;
-}
-
-int tlsrpt_finish_delivery_request(struct tlsrpt_dr_t* dr) {
-  int res=_tlsrpt_finish_delivery_request(dr);
-  tlsrpt_free(dr);
   return res;
 }
 
