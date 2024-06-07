@@ -100,7 +100,6 @@ We return BLOCKNR+errno, but these errors are not forwarding an errno valu from 
 */
 #define ERR_TLSRPT 10000 // the designator for the number block, unused within the library because there are no "ERR_TLSRPT+errno" errors, but can be used along with the other block designators to classify an error
 #define ERR_TLSRPT_ALREADYSENT 10701 // The datagram was already sent, tlsrpt_finish_delivery_request called twice?
-#define ERR_TLSRPT_ALREADYFAILED 10702 // There were previous errors, the first error is in the status field of the request
 #define ERR_TLSRPT_CANCELLED 10703 // The request was cancelled via tlsrpt_cancel_delivery_request
 #define ERR_TLSRPT_SOCKETNAMETOOLONG 10711 // The name of the unix domain socket was too long
 #define ERR_TLSRPT_UNFINISHEDPOLICY 10712 // Call to tlsrpt_init_policy was not properly paired with tlsrpt_finish_policy
@@ -112,11 +111,9 @@ We return BLOCKNR+errno, but these errors are not forwarding an errno valu from 
 #define ERR_TLSRPT_NESTEDPOLICY 10731 // Two calls to tlsrpt_init_policy without properly calling tlsrpt_finish_policy on the first one
 #define ERR_TLSRPT_NOPOLICIES 10732 // No policies were added
 
-/* return the error code for the given situation and flag the current delivery request as failed
-or just return ERR_TLSRPT_ALREADYFAILED if another error already has occured */
+/* flag the current delivery request as failed if it wasn´t failed already and return the old or new error code */
 static int errorcode(tlsrpt_dr_t *dr, int errcode) {
-  if(dr->status != 0) return ERR_TLSRPT_ALREADYFAILED;
-  dr->status=errcode;
+  if(dr->status == 0) dr->status=errcode;
   return errcode;
 }
 
@@ -124,7 +121,7 @@ int tlsrpt_errno_from_error_code(int errorcode) {
   return errorcode % 1000;
 }
 
-#define RETURN_ON_EXISTING_ERRORS  if(dr->status != 0) return ERR_TLSRPT_ALREADYFAILED;
+#define RETURN_ON_EXISTING_ERRORS  if(dr->status != 0) return dr->status;
 
 
 /* allow for a different malloc implementation */
