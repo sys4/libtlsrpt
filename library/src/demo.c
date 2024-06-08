@@ -53,11 +53,11 @@ void testrun() {
   tlsrpt_add_delivery_request_failure(dr, TLSRPT_STS_POLICY_INVALID, "1.2.3.4", "mailin.example.com", "test-ehlo.example.com", "11.22.33.44", "This is additional information", "999 TEST REASON CODE");
   tlsrpt_add_delivery_request_failure(dr, TLSRPT_STS_WEBPKI_INVALID, "1.2.3.5", "mailin.example.com", "test-ehlo.example.com", "11.22.33.55", "This is additional information", "123 ANOTHER TEST REASON CODE");
   tlsrpt_finish_policy(dr, TLSRPT_FINAL_FAILURE);
-  res = tlsrpt_finish_delivery_request(dr);
+  res = tlsrpt_finish_delivery_request(&dr);
 
   printf("Result code is %d\n", res);
   
-  tlsrpt_close(con);
+  tlsrpt_close(&con);
 
 }
 

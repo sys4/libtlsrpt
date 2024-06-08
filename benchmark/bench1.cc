@@ -139,7 +139,7 @@ int main(int argc, char *argv[])
       CHECK;
     }
 
-    res = tlsrpt_finish_delivery_request(dr);
+    res = tlsrpt_finish_delivery_request(&dr);
     CHECK;
     if(res==0) {
       ++donetotal;
@@ -168,7 +168,7 @@ int main(int argc, char *argv[])
     ++i;    
   }
 
-  tlsrpt_close(con);
+  tlsrpt_close(&con);
   rate.stop();
   cout<<endl<<rate<<endl;
   return 0;

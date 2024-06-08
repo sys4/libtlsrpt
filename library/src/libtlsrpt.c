@@ -170,8 +170,14 @@ static int write_attribute_if_not_null(FILE *file, const char* name, const char*
 static int tlsrpt_open_prepare_struct(struct tlsrpt_connection_t* con, const char* socketname) {
   /*  no calls to errorcode from this function because we have no tlsrpt_dr struct yet to record the error */
 
-  /* Clear the whole structure */
+  /* Clear the socket address structure */
   memset(&con->addr, 0, sizeof(struct sockaddr_un));
+  con->sock_fd = -1;
+
+  /* Set destination address */
+  if(strlen(socketname)>sizeof(con->addr.sun_path) - 1) return ERR_TLSRPT_SOCKETNAMETOOLONG;
+  con->addr.sun_family = AF_UNIX;
+  strncpy(con->addr.sun_path, socketname, sizeof(con->addr.sun_path) - 1);
 
   /* Create local socket */
   con->sock_fd = socket(AF_UNIX, SOCK_DGRAM, 0);
@@ -179,17 +185,13 @@ static int tlsrpt_open_prepare_struct(struct tlsrpt_connection_t* con, const cha
     return ERR_SOCKET+errno;
   }
 
-  /* Set destination address */
-  con->addr.sun_family = AF_UNIX;
-  strncpy(con->addr.sun_path, socketname, sizeof(con->addr.sun_path) - 1);
-  if(strlen(socketname)>sizeof(con->addr.sun_path) - 1) return ERR_TLSRPT_SOCKETNAMETOOLONG;
-
   return 0;
 }
 
-int tlsrpt_close(struct tlsrpt_connection_t* con) {
+int tlsrpt_close(struct tlsrpt_connection_t** pcon) {
   /*  no calls to errorcode from this function because we have no tlsrpt_dr struct to record the error */
   int res = 0;
+  struct tlsrpt_connection_t* con=*pcon;
   memset(&con->addr, 0, sizeof(struct sockaddr_un));
   if(con->sock_fd!=-1) {
     res = close(con->sock_fd);
@@ -197,6 +199,7 @@ int tlsrpt_close(struct tlsrpt_connection_t* con) {
     if(res != 0) res=ERR_CLOSE+errno;
   }
   tlsrpt_free(con);
+  *pcon=NULL;
   return res;
 }
 
@@ -211,7 +214,7 @@ int tlsrpt_open(struct tlsrpt_connection_t** pcon, const char* socketname) {
     return 0;
   }
   // clean up
-  tlsrpt_close(ptr);
+  tlsrpt_close(&ptr);
   return res;
 }
 
@@ -466,21 +469,23 @@ void debug_datagram_hook(void* data) {
 /* END DEBUG TOOLS */
 
 /* Set this request to cancelled and clean up everything by calling tlsrpt_finish_delivery_request. */
-int tlsrpt_cancel_delivery_request(struct tlsrpt_dr_t* dr) {
+int tlsrpt_cancel_delivery_request(struct tlsrpt_dr_t** pdr) {
+  struct tlsrpt_dr_t *dr=*pdr;
   int finalresult=dr->status;
   errorcode(dr, ERR_TLSRPT_CANCELLED);
-  tlsrpt_finish_delivery_request(dr);
+  tlsrpt_finish_delivery_request(pdr);
   return finalresult;
 }
 
 /* Finish a delivery request. Cleans up everything and only sends out the datagram if no errors were encountered. */
-int tlsrpt_finish_delivery_request(tlsrpt_dr_t *dr) {
+int tlsrpt_finish_delivery_request(struct tlsrpt_dr_t **pdr) {
   /*
 Throughout this function the errorcode is never returned prematurely!
 We need to go through all steps of cleaning up.
 Calls to errorcode will record the errorcode in the tlsrpt_dr_t structure, but there is no "return errorcode(...)" statement.
    */
   int res=0;
+  struct tlsrpt_dr_t *dr=*pdr;
 
   if(dr->con==NULL) {
     errorcode(dr,ERR_TLSRPT_NOCONNECTION);
@@ -518,6 +523,7 @@ Calls to errorcode will record the errorcode in the tlsrpt_dr_t structure, but t
   int finalresult=dr->status;
 
   tlsrpt_free(dr);
+  *pdr=NULL;
   return finalresult;
 }
 
@@ -533,7 +539,7 @@ int tlsrpt_init_delivery_request(struct tlsrpt_dr_t** pdr, struct tlsrpt_connect
     return 0;
   }
   // clean up
-  tlsrpt_cancel_delivery_request(ptr);
+  tlsrpt_cancel_delivery_request(&ptr);
   return res;
 }
 

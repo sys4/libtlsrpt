@@ -68,12 +68,12 @@ struct tlsrpt_dr_t;
 
 /* Handling of the connection */
 int tlsrpt_open(struct tlsrpt_connection_t** pcon, const char* socketname);
-int tlsrpt_close(struct tlsrpt_connection_t* con);
+int tlsrpt_close(struct tlsrpt_connection_t** pcon);
 
 /* Handling of a single delivery request, an open connection is required */
 int tlsrpt_init_delivery_request(struct tlsrpt_dr_t** pdr, struct tlsrpt_connection_t* con, const char* domainname);
-int tlsrpt_cancel_delivery_request(struct tlsrpt_dr_t* dr);
-int tlsrpt_finish_delivery_request(struct tlsrpt_dr_t* dr);
+int tlsrpt_cancel_delivery_request(struct tlsrpt_dr_t** pdr);
+int tlsrpt_finish_delivery_request(struct tlsrpt_dr_t** pdr);
 
 /* Handling of a policy within a delivery request, an initialized delivery request object is required */
 int tlsrpt_init_policy(struct tlsrpt_dr_t* dr, tlsrpt_policy_type_t policy_type, const char* policydomainname);
