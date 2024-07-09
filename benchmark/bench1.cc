@@ -78,10 +78,10 @@ int main(int argc, char *argv[])
 
     struct tlsrpt_dr_t *dr=NULL;
     SOCKOPENINNER
-    res = tlsrpt_init_delivery_request(&dr, con, domain);
+      res = tlsrpt_init_delivery_request(&dr, con, domain);
     CHECK;
 
-    int pol=forcepol>=0?forcepol:i;
+    int pol=forcepol>=0?forcepol:(i+(i%16==0?1:0));
 
     // first policy
     if(pol & 1) {
