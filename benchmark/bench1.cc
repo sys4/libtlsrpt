@@ -78,7 +78,7 @@ int main(int argc, char *argv[])
 
     struct tlsrpt_dr_t *dr=NULL;
     SOCKOPENINNER
-      res = tlsrpt_init_delivery_request(&dr, con, domain);
+      res = tlsrpt_init_delivery_request(&dr, con, domain, "v=TLSRPTv1;rua=mailto:reports@example.com");
     CHECK;
 
     int pol=forcepol>=0?forcepol:(i+(i%16==0?1:0));

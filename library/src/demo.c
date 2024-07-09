@@ -43,7 +43,7 @@ void testrun() {
   const char* domain="example.com";
 
   struct tlsrpt_dr_t *dr=NULL;
-  tlsrpt_init_delivery_request(&dr, con, domain);
+  tlsrpt_init_delivery_request(&dr, con, domain, "v=TLSRPTv1;rua=mailto:reports@example.com");
   tlsrpt_init_policy(dr, TLSRPT_POLICY_STS , "company-y.example");
   tlsrpt_add_policy_string(dr,"version: STSv1");
   tlsrpt_add_policy_string(dr,"mode: testing");

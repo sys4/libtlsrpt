@@ -249,7 +249,7 @@ static void reset_sub_memstreams(tlsrpt_dr_t *dr) {
   dr->memstreamsizefd=0;
 }
 
-static int tlsrpt_init_delivery_request_prepare_struct(tlsrpt_dr_t *dr, tlsrpt_connection_t* con, const char* domainname) {
+static int tlsrpt_init_delivery_request_prepare_struct(tlsrpt_dr_t *dr, tlsrpt_connection_t* con, const char* domainname, const char* policyrecord) {
   int res=0;
   dr->status=0;
   dr->con=con;
@@ -266,6 +266,8 @@ static int tlsrpt_init_delivery_request_prepare_struct(tlsrpt_dr_t *dr, tlsrpt_c
   res=fprintf(dr->memstream, "{");
   if(res<0) return errorcode(dr, ERR_FPRINTF_INITDR+errno);
   res=write_first_attribute(dr->memstream, "d", domainname);
+  if(res<0) return errorcode(dr, ERR_FPRINTF_INITDR+errno);
+  res=write_attribute(dr->memstream, "pr", policyrecord);
   if(res<0) return errorcode(dr, ERR_FPRINTF_INITDR+errno);
 
   if(dr->con==NULL) return errorcode(dr,ERR_TLSRPT_NOCONNECTION);
@@ -528,12 +530,12 @@ Calls to errorcode will record the errorcode in the tlsrpt_dr_t structure, but t
 }
 
 /* Initialize a delivery request */
-int tlsrpt_init_delivery_request(struct tlsrpt_dr_t** pdr, struct tlsrpt_connection_t* con, const char* domainname) {
+int tlsrpt_init_delivery_request(struct tlsrpt_dr_t** pdr, struct tlsrpt_connection_t* con, const char* domainname, const char* policyrecord) {
   *pdr=NULL;
   struct tlsrpt_dr_t* ptr=(struct tlsrpt_dr_t*)tlsrpt_malloc(sizeof(struct tlsrpt_dr_t));
   if(ptr==NULL) return ERR_MALLOC_OPENDR+errno;
 
-  int res=tlsrpt_init_delivery_request_prepare_struct(ptr, con, domainname);
+  int res=tlsrpt_init_delivery_request_prepare_struct(ptr, con, domainname, policyrecord);
   if(res==0) {
     *pdr=ptr;
     return 0;

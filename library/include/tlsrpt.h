@@ -71,7 +71,7 @@ int tlsrpt_open(struct tlsrpt_connection_t** pcon, const char* socketname);
 int tlsrpt_close(struct tlsrpt_connection_t** pcon);
 
 /* Handling of a single delivery request, an open connection is required */
-int tlsrpt_init_delivery_request(struct tlsrpt_dr_t** pdr, struct tlsrpt_connection_t* con, const char* domainname);
+  int tlsrpt_init_delivery_request(struct tlsrpt_dr_t** pdr, struct tlsrpt_connection_t* con, const char* domainname, const char* policyrecord);
 int tlsrpt_cancel_delivery_request(struct tlsrpt_dr_t** pdr);
 int tlsrpt_finish_delivery_request(struct tlsrpt_dr_t** pdr);
 
