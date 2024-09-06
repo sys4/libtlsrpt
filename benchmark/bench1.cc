@@ -38,7 +38,7 @@ tlsrpt_connection_t* con=NULL;
 #define SOCKCLOSEINNER
 #endif
 
-#define CHECK if(res!=0) fprintf(stderr, "RESULT AT %d IS %d : %s\n" ,__LINE__, res, strerror(res%1000));
+#define CHECK if(res!=0) fprintf(stderr, "RESULT AT LINE %d IS %d : %s: %s\n" ,__LINE__, res, tlsrpt_strerror(res), strerror(tlsrpt_errno_from_error_code(res)));
 //#define CHECK 
 
 extern int dbgnumber;

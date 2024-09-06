@@ -71,44 +71,6 @@ extern const char *tlsrpt_json_escape_values[256];
 
 #define DEBUG if(0)
 
-/*
-All TLSRPT function return 0 on success or an individual error code:
-- errors detected within the TLSRPT c library are returned within the ERR_TLSRPT number block listed below
-- errors from standard c library functions are returned as the errno encountered plus one of these constants to identify the syscall that yielded the error and the tlsrpt library function where it occured:
-*/
-#define ERR_SOCKET 11000
-#define ERR_CLOSE 12000
-#define ERR_SENDTO 13000
-#define ERR_OPEN_MEMSTREAM_INITDR 21000
-#define ERR_OPEN_MEMSTREAM_INITPOLICY 22000
-#define ERR_FCLOSE_FINISHPOLICY 28000
-#define ERR_FCLOSE_FINISHDR 29000
-#define ERR_FPRINTF_INITDR 31000
-#define ERR_FPRINTF_INITPOLICY 32000
-#define ERR_FPRINTF_ADDPOLICYSTRING 33000
-#define ERR_FPRINTF_ADDMXHOSTPATTERN 34000
-#define ERR_FPRINTF_FINISHPOLICY 35000
-#define ERR_FPRINTF_ADDFAILURE 36000
-#define ERR_FPRINTF_FINISHDR 37000
-#define ERR_MALLOC_OPENCON 41000
-#define ERR_MALLOC_OPENDR 42000
-
-
-/* 
-Error codes from the TLSRPT number block:
-We return BLOCKNR+errno, but these errors are not forwarding an errno valu from a std clib call we use intentional high numbers so that strerror(errorcode % 1000) does not give misleading results as would be the case for low-range numbers.
-*/
-#define ERR_TLSRPT 10000 // the designator for the number block, unused within the library because there are no "ERR_TLSRPT+errno" errors, but can be used along with the other block designators to classify an error
-#define ERR_TLSRPT_CANCELLED 10703 // The request was cancelled via tlsrpt_cancel_delivery_request
-#define ERR_TLSRPT_SOCKETNAMETOOLONG 10711 // The name of the unix domain socket was too long
-#define ERR_TLSRPT_UNFINISHEDPOLICY 10712 // Call to tlsrpt_init_policy was not properly paired with tlsrpt_finish_policy
-#define ERR_TLSRPT_NOCONNECTION 10713 // Connection pointer is NULL
-#define ERR_TLSRPT_MEMSTREAM_NOT_INITIALIZED 10721 // an internal memstream was not initialized
-#define ERR_TLSRPT_MEMSTREAMPS_NOT_INITIALIZED 10722 // an internal memstream was not initialized
-#define ERR_TLSRPT_MEMSTREAMMX_NOT_INITIALIZED 10723 // an internal memstream was not initialized
-#define ERR_TLSRPT_MEMSTREAMFD_NOT_INITIALIZED 10724 // an internal memstream was not initialized
-#define ERR_TLSRPT_NESTEDPOLICY 10731 // Two calls to tlsrpt_init_policy without properly calling tlsrpt_finish_policy on the first one
-#define ERR_TLSRPT_NOPOLICIES 10732 // No policies were added
 
 /* flag the current delivery request as failed if it wasn´t failed already and return the old or new error code */
 static int errorcode(tlsrpt_dr_t *dr, int errcode) {
@@ -116,9 +78,58 @@ static int errorcode(tlsrpt_dr_t *dr, int errcode) {
   return errcode;
 }
 
+/* Extracts the errno part from an error code */
 int tlsrpt_errno_from_error_code(int errorcode) {
   return errorcode % 1000;
 }
+
+/* Returns 1 if the error code is an internal tlsrpt library error or 0 if the errno part is a errno value from libc */
+int tlsrpt_error_code_is_internal(int errorcode) {
+  return ((errorcode-tlsrpt_errno_from_error_code(errorcode))==TLSRPT_ERR_TLSRPT)?1:0;
+}
+
+#define INTERNAL_ERROR_STRERROR_PREFIX "TLSRPT internal library error: "
+/* Returns a string describing the internal error or the context of a libc error: the libc function call and from which TLSRPT function it was called if there is more than one call */
+const char* tlsrpt_strerror(int errorcode) {
+  if(!tlsrpt_error_code_is_internal(errorcode)) { // reduce libc errors to their number block
+    errorcode = errorcode - tlsrpt_errno_from_error_code(errorcode);
+  }
+  
+  switch(errorcode) {
+    // internal errors
+    // TLSRPT_ERR_TLSRPT is the internal library error block begin, this code is not returned by any function
+  case TLSRPT_ERR_TLSRPT_CANCELLED: return INTERNAL_ERROR_STRERROR_PREFIX "The request was cancelled via tlsrpt_cancel_delivery_request";
+  case TLSRPT_ERR_TLSRPT_SOCKETNAMETOOLONG: return INTERNAL_ERROR_STRERROR_PREFIX "The name of the unix domain socket was too long";
+  case TLSRPT_ERR_TLSRPT_UNFINISHEDPOLICY: return INTERNAL_ERROR_STRERROR_PREFIX "Call to tlsrpt_init_policy was not properly paired with tlsrpt_finish_policy";
+  case TLSRPT_ERR_TLSRPT_NOCONNECTION: return INTERNAL_ERROR_STRERROR_PREFIX "Connection pointer is NULL";
+  case TLSRPT_ERR_TLSRPT_MEMSTREAM_NOT_INITIALIZED: return INTERNAL_ERROR_STRERROR_PREFIX "The internal main memstream was not initialized";
+  case TLSRPT_ERR_TLSRPT_MEMSTREAMPS_NOT_INITIALIZED: return INTERNAL_ERROR_STRERROR_PREFIX "The internal ps memstream was not initialized";
+  case TLSRPT_ERR_TLSRPT_MEMSTREAMMX_NOT_INITIALIZED: return INTERNAL_ERROR_STRERROR_PREFIX "The internal mx memstream was not initialized";
+  case TLSRPT_ERR_TLSRPT_MEMSTREAMFD_NOT_INITIALIZED: return INTERNAL_ERROR_STRERROR_PREFIX "The internal fd memstream was not initialized";
+  case TLSRPT_ERR_TLSRPT_NESTEDPOLICY: return INTERNAL_ERROR_STRERROR_PREFIX "Two calls to tlsrpt_init_policy without properly calling tlsrpt_finish_policy on the first one";
+  case TLSRPT_ERR_TLSRPT_NOPOLICIES: return INTERNAL_ERROR_STRERROR_PREFIX "No policies were added";
+    // errors from the C-library
+  case TLSRPT_ERR_SOCKET: return "TLSRPT error in call to socket";
+  case TLSRPT_ERR_CLOSE: return "TLSRPT error in call to close";
+  case TLSRPT_ERR_SENDTO: return "TLSRPT error in call to sendto";
+  case TLSRPT_ERR_OPEN_MEMSTREAM_INITDR: return "TLSRPT error in call to open_memstream in initdr";
+  case TLSRPT_ERR_OPEN_MEMSTREAM_INITPOLICY: return "TLSRPT error in call to open_memstream in initpolicy";
+  case TLSRPT_ERR_FCLOSE_FINISHPOLICY: return "TLSRPT error in call to fclose in finishpolicy";
+  case TLSRPT_ERR_FCLOSE_FINISHDR: return "TLSRPT error in call to fclose in finishdr";
+  case TLSRPT_ERR_FPRINTF_INITDR: return "TLSRPT error in call to fprintf in initdr";
+  case TLSRPT_ERR_FPRINTF_INITPOLICY: return "TLSRPT error in call to fprintf in initpolicy";
+  case TLSRPT_ERR_FPRINTF_ADDPOLICYSTRING: return "TLSRPT error in call to fprintf in addpolicystring";
+  case TLSRPT_ERR_FPRINTF_ADDMXHOSTPATTERN: return "TLSRPT error in call to fprintf in addmxhostpattern";
+  case TLSRPT_ERR_FPRINTF_FINISHPOLICY: return "TLSRPT error in call to fprintf in finishpolicy";
+  case TLSRPT_ERR_FPRINTF_ADDFAILURE: return "TLSRPT error in call to fprintf in addfailure";
+  case TLSRPT_ERR_FPRINTF_FINISHDR: return "TLSRPT error in call to fprintf in finishdr";
+  case TLSRPT_ERR_MALLOC_OPENCON: return "TLSRPT error in call to malloc in opencon";
+  case TLSRPT_ERR_MALLOC_OPENDR: return "TLSRPT error in call to malloc in opendr";
+  default:
+    return "UNKNOWN TLSRPT ERROR CODE";
+  }
+}
+
 
 #define RETURN_ON_EXISTING_ERRORS  if(dr->status != 0) return dr->status;
 
@@ -175,14 +186,14 @@ static int tlsrpt_open_prepare_struct(struct tlsrpt_connection_t* con, const cha
   con->sock_fd = -1;
 
   /* Set destination address */
-  if(strlen(socketname)>sizeof(con->addr.sun_path) - 1) return ERR_TLSRPT_SOCKETNAMETOOLONG;
+  if(strlen(socketname)>sizeof(con->addr.sun_path) - 1) return TLSRPT_ERR_TLSRPT_SOCKETNAMETOOLONG;
   con->addr.sun_family = AF_UNIX;
   strncpy(con->addr.sun_path, socketname, sizeof(con->addr.sun_path) - 1);
 
   /* Create local socket */
   con->sock_fd = socket(AF_UNIX, SOCK_DGRAM, 0);
   if (con->sock_fd == -1) {
-    return ERR_SOCKET+errno;
+    return TLSRPT_ERR_SOCKET+errno;
   }
 
   return 0;
@@ -196,7 +207,7 @@ int tlsrpt_close(struct tlsrpt_connection_t** pcon) {
   if(con->sock_fd!=-1) {
     res = close(con->sock_fd);
     con->sock_fd=-1;
-    if(res != 0) res=ERR_CLOSE+errno;
+    if(res != 0) res=TLSRPT_ERR_CLOSE+errno;
   }
   tlsrpt_free(con);
   *pcon=NULL;
@@ -206,7 +217,7 @@ int tlsrpt_close(struct tlsrpt_connection_t** pcon) {
 int tlsrpt_open(struct tlsrpt_connection_t** pcon, const char* socketname) {
   *pcon=NULL;
   struct tlsrpt_connection_t* ptr=(struct tlsrpt_connection_t*)tlsrpt_malloc(sizeof(struct tlsrpt_connection_t));
-  if(ptr==NULL) return ERR_MALLOC_OPENCON+errno;
+  if(ptr==NULL) return TLSRPT_ERR_MALLOC_OPENCON+errno;
 
   int res=tlsrpt_open_prepare_struct(ptr, socketname);
   if(res==0) {
@@ -262,15 +273,15 @@ static int tlsrpt_init_delivery_request_prepare_struct(tlsrpt_dr_t *dr, tlsrpt_c
   dr->memstreambuffer=NULL;
   dr->memstreamsize=0;
   dr->memstream=open_memstream(&dr->memstreambuffer, &dr->memstreamsize);
-  if(dr->memstream==NULL) return errorcode(dr, ERR_OPEN_MEMSTREAM_INITDR+errno);
+  if(dr->memstream==NULL) return errorcode(dr, TLSRPT_ERR_OPEN_MEMSTREAM_INITDR+errno);
   res=fprintf(dr->memstream, "{");
-  if(res<0) return errorcode(dr, ERR_FPRINTF_INITDR+errno);
+  if(res<0) return errorcode(dr, TLSRPT_ERR_FPRINTF_INITDR+errno);
   res=write_first_attribute(dr->memstream, "d", domainname);
-  if(res<0) return errorcode(dr, ERR_FPRINTF_INITDR+errno);
+  if(res<0) return errorcode(dr, TLSRPT_ERR_FPRINTF_INITDR+errno);
   res=write_attribute(dr->memstream, "pr", policyrecord);
-  if(res<0) return errorcode(dr, ERR_FPRINTF_INITDR+errno);
+  if(res<0) return errorcode(dr, TLSRPT_ERR_FPRINTF_INITDR+errno);
 
-  if(dr->con==NULL) return errorcode(dr,ERR_TLSRPT_NOCONNECTION);
+  if(dr->con==NULL) return errorcode(dr,TLSRPT_ERR_TLSRPT_NOCONNECTION);
 
   return 0;
 }
@@ -279,21 +290,21 @@ int tlsrpt_init_policy(struct tlsrpt_dr_t* dr, tlsrpt_policy_type_t policy_type,
   int res=0;
 
   RETURN_ON_EXISTING_ERRORS;
-  
-  reset_sub_memstreams(dr);
 
-  /* Check if we are already within a policy! */
-  if(dr->memstreamps!=NULL) return errorcode(dr, ERR_TLSRPT_NESTEDPOLICY);
+  /* Check if we are already within a policy before resetting the memstreams! */
+  if(dr->memstreamps!=NULL) return errorcode(dr, TLSRPT_ERR_TLSRPT_NESTEDPOLICY);
+
+  reset_sub_memstreams(dr);
 
   /* sub-memstream for policy strings */
   dr->memstreamps=open_memstream(&dr->memstreambufferps, &dr->memstreamsizeps);
-  if(dr->memstreamps==NULL) return errorcode(dr, ERR_OPEN_MEMSTREAM_INITPOLICY+errno);
+  if(dr->memstreamps==NULL) return errorcode(dr, TLSRPT_ERR_OPEN_MEMSTREAM_INITPOLICY+errno);
   /* sub-memstream for mx host patterns */
   dr->memstreammx=open_memstream(&dr->memstreambuffermx, &dr->memstreamsizemx);
-  if(dr->memstreammx==NULL) return errorcode(dr, ERR_OPEN_MEMSTREAM_INITPOLICY+errno);
+  if(dr->memstreammx==NULL) return errorcode(dr, TLSRPT_ERR_OPEN_MEMSTREAM_INITPOLICY+errno);
   /* sub-memstream for failure details */
   dr->memstreamfd=open_memstream(&dr->memstreambufferfd, &dr->memstreamsizefd);
-  if(dr->memstreamfd==NULL) return errorcode(dr, ERR_OPEN_MEMSTREAM_INITPOLICY+errno);
+  if(dr->memstreamfd==NULL) return errorcode(dr, TLSRPT_ERR_OPEN_MEMSTREAM_INITPOLICY+errno);
 
   dr->policy_type=policy_type;
 
@@ -302,12 +313,12 @@ int tlsrpt_init_policy(struct tlsrpt_dr_t* dr, tlsrpt_policy_type_t policy_type,
   } else {
     res = fprintf(dr->memstream, "\n,{");
   }
-  if(res<0) return errorcode(dr, ERR_FPRINTF_INITPOLICY+errno);
+  if(res<0) return errorcode(dr, TLSRPT_ERR_FPRINTF_INITPOLICY+errno);
 
   res = fprintf(dr->memstream, "\"policy-type\":%d", dr->policy_type);
-  if(res<0) return errorcode(dr, ERR_FPRINTF_INITPOLICY+errno);
+  if(res<0) return errorcode(dr, TLSRPT_ERR_FPRINTF_INITPOLICY+errno);
   res=write_attribute_if_not_null(dr->memstream, "policy-domain", policydomainname);
-  if(res<0) return errorcode(dr, ERR_FPRINTF_INITPOLICY+errno);
+  if(res<0) return errorcode(dr, TLSRPT_ERR_FPRINTF_INITPOLICY+errno);
   ++dr->policy_count;
 
   return 0;
@@ -319,13 +330,13 @@ int tlsrpt_add_policy_string(struct tlsrpt_dr_t* dr, const char* policy_string) 
   RETURN_ON_EXISTING_ERRORS;
 
   res=fprintf(dr->memstreamps,"%s\"",dr->separatorps);
-  if(res<0) return errorcode(dr, ERR_FPRINTF_ADDPOLICYSTRING+errno);
+  if(res<0) return errorcode(dr, TLSRPT_ERR_FPRINTF_ADDPOLICYSTRING+errno);
 
   res=json_escape(dr->memstreamps,policy_string);
-  if(res<0) return errorcode(dr, ERR_FPRINTF_ADDPOLICYSTRING+errno);
+  if(res<0) return errorcode(dr, TLSRPT_ERR_FPRINTF_ADDPOLICYSTRING+errno);
 
   res=fprintf(dr->memstreamps,"\"");
-  if(res<0) return errorcode(dr, ERR_FPRINTF_ADDPOLICYSTRING+errno);
+  if(res<0) return errorcode(dr, TLSRPT_ERR_FPRINTF_ADDPOLICYSTRING+errno);
 
   dr->separatorps=",";
   return 0;
@@ -337,13 +348,13 @@ int tlsrpt_add_mx_host_pattern(struct tlsrpt_dr_t* dr, const char* mx_host_patte
   RETURN_ON_EXISTING_ERRORS;
 
   res=fprintf(dr->memstreammx,"%s\"",dr->separatormx);
-  if(res<0) return errorcode(dr, ERR_FPRINTF_ADDMXHOSTPATTERN+errno);
+  if(res<0) return errorcode(dr, TLSRPT_ERR_FPRINTF_ADDMXHOSTPATTERN+errno);
 
   res=json_escape(dr->memstreammx,mx_host_pattern);
-  if(res<0) return errorcode(dr, ERR_FPRINTF_ADDMXHOSTPATTERN+errno);
+  if(res<0) return errorcode(dr, TLSRPT_ERR_FPRINTF_ADDMXHOSTPATTERN+errno);
 
   res=fprintf(dr->memstreammx,"\"");
-  if(res<0) return errorcode(dr, ERR_FPRINTF_ADDMXHOSTPATTERN+errno);
+  if(res<0) return errorcode(dr, TLSRPT_ERR_FPRINTF_ADDMXHOSTPATTERN+errno);
 
   dr->separatormx=",";
   return 0;
@@ -358,35 +369,35 @@ Calls to errorcode will record the errorcode in the tlsrpt_dr_t structure.
    */
   if(dr->memstreamps!=NULL) {
     res=fclose(dr->memstreamps);
-    if(res!=0) errorcode(dr, ERR_FCLOSE_FINISHPOLICY+errno);
+    if(res!=0) errorcode(dr, TLSRPT_ERR_FCLOSE_FINISHPOLICY+errno);
   } else {
-    errorcode(dr,ERR_TLSRPT_MEMSTREAMPS_NOT_INITIALIZED);
+    errorcode(dr,TLSRPT_ERR_TLSRPT_MEMSTREAMPS_NOT_INITIALIZED);
   }
   if(dr->memstreammx!=NULL) {
     res=fclose(dr->memstreammx);
-    if(res!=0) errorcode(dr, ERR_FCLOSE_FINISHPOLICY+errno);
+    if(res!=0) errorcode(dr, TLSRPT_ERR_FCLOSE_FINISHPOLICY+errno);
   } else {
-    errorcode(dr,ERR_TLSRPT_MEMSTREAMMX_NOT_INITIALIZED);
+    errorcode(dr,TLSRPT_ERR_TLSRPT_MEMSTREAMMX_NOT_INITIALIZED);
   }
   if(dr->memstreamfd!=NULL) {
     res=fclose(dr->memstreamfd);
-    if(res!=0) errorcode(dr, ERR_FCLOSE_FINISHPOLICY+errno);
+    if(res!=0) errorcode(dr, TLSRPT_ERR_FCLOSE_FINISHPOLICY+errno);
   } else {
-    errorcode(dr,ERR_TLSRPT_MEMSTREAMFD_NOT_INITIALIZED);
+    errorcode(dr,TLSRPT_ERR_TLSRPT_MEMSTREAMFD_NOT_INITIALIZED);
   }
 
   if(dr->memstream!=NULL) {
     if(dr->memstreamsizeps>0) res = fprintf(dr->memstream, ",\"policy-string\":[%s]", dr->memstreambufferps);
-    if(res<0) return errorcode(dr, ERR_FPRINTF_FINISHPOLICY+errno);
+    if(res<0) return errorcode(dr, TLSRPT_ERR_FPRINTF_FINISHPOLICY+errno);
     if(dr->memstreamsizemx>0) res = fprintf(dr->memstream, ",\"mx-host\":[%s]", dr->memstreambuffermx);
-    if(res<0) return errorcode(dr, ERR_FPRINTF_FINISHPOLICY+errno);
+    if(res<0) return errorcode(dr, TLSRPT_ERR_FPRINTF_FINISHPOLICY+errno);
     if(dr->memstreamsizefd>0) res = fprintf(dr->memstream, ",\"failure-details\":[%s]", dr->memstreambufferfd);
-    if(res<0) return errorcode(dr, ERR_FPRINTF_FINISHPOLICY+errno);
+    if(res<0) return errorcode(dr, TLSRPT_ERR_FPRINTF_FINISHPOLICY+errno);
 
     res=fprintf(dr->memstream, ",\"t\":%d,\"f\":%d}", dr->failure_count, final_result);
-    if(res<0) return errorcode(dr, ERR_FPRINTF_FINISHPOLICY+errno);
+    if(res<0) return errorcode(dr, TLSRPT_ERR_FPRINTF_FINISHPOLICY+errno);
   } else {
-    errorcode(dr,ERR_TLSRPT_MEMSTREAM_NOT_INITIALIZED);
+    errorcode(dr,TLSRPT_ERR_TLSRPT_MEMSTREAM_NOT_INITIALIZED);
   }
 
   free(dr->memstreambufferps);
@@ -411,27 +422,27 @@ int tlsrpt_add_delivery_request_failure(struct tlsrpt_dr_t* dr, tlsrpt_failure_t
   dr->failure_count+=1;
 
   res=fprintf(dr->memstreamfd,"%s",dr->separatorfd);
-  if(res<0) return errorcode(dr, ERR_FPRINTF_ADDFAILURE+errno);
+  if(res<0) return errorcode(dr, TLSRPT_ERR_FPRINTF_ADDFAILURE+errno);
   res=fprintf(dr->memstreamfd,"{");
-  if(res<0) return errorcode(dr, ERR_FPRINTF_ADDFAILURE+errno);
+  if(res<0) return errorcode(dr, TLSRPT_ERR_FPRINTF_ADDFAILURE+errno);
   res=write_failure_code(dr->memstreamfd, "c", failure_code);
-  if(res<0) return errorcode(dr, ERR_FPRINTF_ADDFAILURE+errno);
+  if(res<0) return errorcode(dr, TLSRPT_ERR_FPRINTF_ADDFAILURE+errno);
 
   res=write_attribute_if_not_null(dr->memstreamfd, "s", sending_mta_ip);
-  if(res<0) return errorcode(dr, ERR_FPRINTF_ADDFAILURE+errno);
+  if(res<0) return errorcode(dr, TLSRPT_ERR_FPRINTF_ADDFAILURE+errno);
   res=write_attribute_if_not_null(dr->memstreamfd, "n", receiving_mx_hostname);
-  if(res<0) return errorcode(dr, ERR_FPRINTF_ADDFAILURE+errno);
+  if(res<0) return errorcode(dr, TLSRPT_ERR_FPRINTF_ADDFAILURE+errno);
   res=write_attribute_if_not_null(dr->memstreamfd, "h", receiving_mx_helo);
-  if(res<0) return errorcode(dr, ERR_FPRINTF_ADDFAILURE+errno);
+  if(res<0) return errorcode(dr, TLSRPT_ERR_FPRINTF_ADDFAILURE+errno);
   res=write_attribute_if_not_null(dr->memstreamfd, "r", receiving_ip);
-  if(res<0) return errorcode(dr, ERR_FPRINTF_ADDFAILURE+errno);
+  if(res<0) return errorcode(dr, TLSRPT_ERR_FPRINTF_ADDFAILURE+errno);
   res=write_attribute_if_not_null(dr->memstreamfd, "a", additional_information);
-  if(res<0) return errorcode(dr, ERR_FPRINTF_ADDFAILURE+errno);
+  if(res<0) return errorcode(dr, TLSRPT_ERR_FPRINTF_ADDFAILURE+errno);
   res=write_attribute_if_not_null(dr->memstreamfd, "f", failure_reason_code);
-  if(res<0) return errorcode(dr, ERR_FPRINTF_ADDFAILURE+errno);
+  if(res<0) return errorcode(dr, TLSRPT_ERR_FPRINTF_ADDFAILURE+errno);
 
   res=fprintf(dr->memstreamfd,"}");
-  if(res<0) return errorcode(dr, ERR_FPRINTF_ADDFAILURE+errno);
+  if(res<0) return errorcode(dr, TLSRPT_ERR_FPRINTF_ADDFAILURE+errno);
   dr->separatorfd=",";
   return 0;
 }
@@ -474,7 +485,7 @@ void debug_datagram_hook(void* data) {
 int tlsrpt_cancel_delivery_request(struct tlsrpt_dr_t** pdr) {
   struct tlsrpt_dr_t *dr=*pdr;
   int finalresult=dr->status;
-  errorcode(dr, ERR_TLSRPT_CANCELLED);
+  errorcode(dr, TLSRPT_ERR_TLSRPT_CANCELLED);
   tlsrpt_finish_delivery_request(pdr);
   return finalresult;
 }
@@ -490,33 +501,33 @@ Calls to errorcode will record the errorcode in the tlsrpt_dr_t structure, but t
   struct tlsrpt_dr_t *dr=*pdr;
 
   if(dr->con==NULL) {
-    errorcode(dr,ERR_TLSRPT_NOCONNECTION);
+    errorcode(dr,TLSRPT_ERR_TLSRPT_NOCONNECTION);
   }
 
   /* Check if finish_policy was called properly and clean up left-overs otherwise */
   if(dr->memstreamps != NULL) {
-    errorcode(dr, ERR_TLSRPT_UNFINISHEDPOLICY);
+    errorcode(dr, TLSRPT_ERR_TLSRPT_UNFINISHEDPOLICY);
     tlsrpt_finish_policy(dr,TLSRPT_UNFINISHED_POLICY);
   }
 
   if(dr->policy_count>0) {
     res=fprintf(dr->memstream, "]");
-    if(res<0) errorcode(dr,ERR_FPRINTF_FINISHDR+errno);
+    if(res<0) errorcode(dr,TLSRPT_ERR_FPRINTF_FINISHDR+errno);
   } else {
-    errorcode(dr, ERR_TLSRPT_NOPOLICIES);
+    errorcode(dr, TLSRPT_ERR_TLSRPT_NOPOLICIES);
   }
 
   res=fprintf(dr->memstream, "}");
-  if(res<0) errorcode(dr,ERR_FPRINTF_FINISHDR+errno);
+  if(res<0) errorcode(dr,TLSRPT_ERR_FPRINTF_FINISHDR+errno);
 
   res=fclose(dr->memstream);
-  if(res!=0) errorcode(dr,ERR_FCLOSE_FINISHDR+errno);
+  if(res!=0) errorcode(dr,TLSRPT_ERR_FCLOSE_FINISHDR+errno);
 
   if(dr->status == 0) { // everything looks fine, we can send the datagram
     res = sendto(dr->con->sock_fd, dr->memstreambuffer, dr->memstreamsize,
 		 tlsrpt_sendto_flags, (const struct sockaddr *) &dr->con->addr,
 		 sizeof(struct sockaddr_un));
-    if(res<0) errorcode(dr,ERR_SENDTO+errno);
+    if(res<0) errorcode(dr,TLSRPT_ERR_SENDTO+errno);
   }
 
   DEBUG debug_datagram_hook(dr->memstreambuffer);
@@ -533,7 +544,7 @@ Calls to errorcode will record the errorcode in the tlsrpt_dr_t structure, but t
 int tlsrpt_init_delivery_request(struct tlsrpt_dr_t** pdr, struct tlsrpt_connection_t* con, const char* domainname, const char* policyrecord) {
   *pdr=NULL;
   struct tlsrpt_dr_t* ptr=(struct tlsrpt_dr_t*)tlsrpt_malloc(sizeof(struct tlsrpt_dr_t));
-  if(ptr==NULL) return ERR_MALLOC_OPENDR+errno;
+  if(ptr==NULL) return TLSRPT_ERR_MALLOC_OPENDR+errno;
 
   int res=tlsrpt_init_delivery_request_prepare_struct(ptr, con, domainname, policyrecord);
   if(res==0) {

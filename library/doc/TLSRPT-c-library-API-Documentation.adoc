@@ -5,8 +5,8 @@
 :title-page:
 
 = TLSRPT for MTAs - API documentation of the C library
-Version 0.02
-2024-06-08
+Version 0.04
+2024-09-05
 
 == Error handling
 
@@ -20,10 +20,11 @@ Errors resulting from system calls or calls to standard libc functions usually s
 The TLSRPT C library functions add this value of `errno` to a constant denoting the system call or standard libc function and the TLSRPT library function the error occured in to give fine-granular error indicators.
 These returned error codes are purely for informative purpose in log files.
 
-The `errno` value part can be extracted with the `tlsrpt_errno_from_error_code` function.
+The `errno` value part can be extracted with the `tlsrpt_errno_from_error_code` function to get the description of the actual error via `strerror` from libc.
+The `tlsrpt_strerror` function describes the internal error or in case of a libc error describes the function call that led to the error.
 
-In case of a failure within the library itself, for example due to a missing call to start a policy, the returned error code is from the ERR_TLSRPT block.
-
+In case of a failure within the library itself, for example due to a missing call to start a policy, the returned error code is from the TLSRPT_ERR_TLSRPT block.
+The `tlsrpt_error_code_is_internal` function can be used to distinguish between internal errors and errors from libc.
 
 After an error occured, that delivery request cannot be recovered again and won´t be sent out.
 
@@ -76,6 +77,7 @@ Parameters:::
  struct tlsrpt_dr_t** pdr::  Address of the pointer that will point to the delivery request
  struct tlsrpt_connection_t* con:: A pointer to the `struct tlsrpt_connection_t` object prepared earlier by a call to `tlsrpt_open`
  const char* domainname:: The recipient domain name of the email to be delivered
+ const char* policyrecord:: The domain´s TLSRPT policy record retreived from the DNS service
 
 The `tlsrpt_init_delivery_request` function allocates and initializes the `struct tlsrpt_dr_t` object.
 The ressources it allocates must be freed by calling either `tlsrpt_finish_delivery_request` or `tlsrpt_cancel_delivery_request`.
@@ -91,7 +93,7 @@ It deallocates the `struct tlsrpt_dr_t` and sets *pdr to `NULL`.
 Parameters:::
  struct tlsrpt_dr_t** pdr::  Address of the pointer pointing to the delivery request to be cancelled
 
-The `tlsrpt_cancel_delivery_request` function marks the delivery request as having encountered an internal library "dummy error" `ERR_TLSRPT_CANCELLED` to prevent it from being sent out.
+The `tlsrpt_cancel_delivery_request` function marks the delivery request as having encountered an internal library "dummy error" `TLSRPT_ERR_TLSRPT_CANCELLED` to prevent it from being sent out.
 It then calls `tlsrpt_finish_delivery_request`, which will do all the clean-up of used ressources.
 
 
@@ -102,7 +104,7 @@ One delivery request can fail according to one policy but still be successful ac
 Finishing a delivery request without any policies at all is considered an error and no datagram will be reported to the TLSRPT receiver.
 
 Policies can not be nested!
-Calling `tlsrpt_init_policy` a second time without a call to `tlsrpt_finish_policy` inbetween will result in `ERR_TLSRPT_NESTEDPOLICY`.
+Calling `tlsrpt_init_policy` a second time without a call to `tlsrpt_finish_policy` inbetween will result in `TLSRPT_ERR_TLSRPT_NESTEDPOLICY`.
 
 ==== `tlsrpt_init_policy`
 Parameters:::
@@ -209,6 +211,21 @@ Parameters:::
  int errorcode:: the error code returned from any of the tlsrpt C library API functions
 
 The `tlsrpt_errno_from_error_code` function returns the `errno` part of an errorcode.
-In case of internal library errors from the ERR_TLSRPT block the returned value will be a high number to avoid clashes with existing errno values.
-I.e. `ERR_TLSRPT_NESTEDPOLICY` is 10731 instead of 10031 to avoid the errno part being decoded as `EMLINK`.
+In case of internal library errors from the TLSRPT_ERR_TLSRPT block the returned value will be a high number to avoid clashes with existing errno values.
+I.e. `TLSRPT_ERR_TLSRPT_NESTEDPOLICY` is 10731 instead of 10031 to avoid the errno part being decoded as `EMLINK`.
 
+==== `tlsrpt_error_code_is_internal`
+Parameters:::
+ int errorcode:: the error code returned from any of the tlsrpt C library API functions
+
+The `tlsrpt_error_code_is_internal` function returns 1 if the error code describes an error internal to the TLSRPT library.
+The function returns 0 if the error code is a composed error code combined of the C library function and the call site within the TLSRPT library and the errno value resulting from the failed call into the C library.
+
+==== `tlsrpt_strerror`
+Parameters:::
+ int errorcode:: the error code returned from any of the tlsrpt C library API functions
+
+The `tlsrpt_strerror` function returns a static string describing the error.
+If the error is not an internal error (`tlsrpt_error_code_is_internal` returns 0 in that case), the text describes the C library function that gave an error and for C library functions that get called from different places within the TLSRPT library, the calling function is mentioned in the description.
+The actual error has to be retrieved from the C library via the `strerror` function or its altrnatives.
+The errno value to be passed into the `strerror` function must be extracted from the error code via the `tlsrpt_errno_from_error_code` function.
