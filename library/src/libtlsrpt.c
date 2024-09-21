@@ -109,9 +109,9 @@ const char* tlsrpt_strerror(int errorcode) {
   case TLSRPT_ERR_TLSRPT_NESTEDPOLICY: return INTERNAL_ERROR_STRERROR_PREFIX "Two calls to tlsrpt_init_policy without properly calling tlsrpt_finish_policy on the first one";
   case TLSRPT_ERR_TLSRPT_NOPOLICIES: return INTERNAL_ERROR_STRERROR_PREFIX "No policies were added";
     // errors from the C-library
-  case TLSRPT_ERR_SOCKET: return "TLSRPT error in call to socket";
-  case TLSRPT_ERR_CLOSE: return "TLSRPT error in call to close";
-  case TLSRPT_ERR_SENDTO: return "TLSRPT error in call to sendto";
+  case TLSRPT_ERR_SOCKET: return "TLSRPT error in call to socket in tlsrpt_open";
+  case TLSRPT_ERR_CLOSE: return "TLSRPT error in call to close in tlsrpt_close";
+  case TLSRPT_ERR_SENDTO: return "TLSRPT error in call to sendto in finishdr";
   case TLSRPT_ERR_OPEN_MEMSTREAM_INITDR: return "TLSRPT error in call to open_memstream in initdr";
   case TLSRPT_ERR_OPEN_MEMSTREAM_INITPOLICY: return "TLSRPT error in call to open_memstream in initpolicy";
   case TLSRPT_ERR_FCLOSE_FINISHPOLICY: return "TLSRPT error in call to fclose in finishpolicy";
