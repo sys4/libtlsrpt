@@ -463,6 +463,10 @@ void tlsrpt_set_nonblocking() {
   tlsrpt_sendto_flags|=MSG_DONTWAIT;
 }
 
+int tlsrpt_get_socket(tlsrpt_connection_t* con) {
+  return con->sock_fd;
+}
+
 /* BEGIN DEBUG tools */
 int totalsenderr=0;
 int dbgnumber=999;

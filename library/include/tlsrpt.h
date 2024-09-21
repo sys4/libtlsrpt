@@ -141,6 +141,7 @@ const char* tlsrpt_strerror(int errorcode);
 /* Debug and development tools */
 void tlsrpt_set_blocking();
 void tlsrpt_set_nonblocking();
+int tlsrpt_get_socket(struct tlsrpt_connection_t* con);
 
 /* Chosing a different malloc implementation */
 void tlsrpt_set_malloc_and_free(void* (*malloc_function)(size_t size), void (*free_function)(void *ptr));
