@@ -309,9 +309,9 @@ int tlsrpt_init_policy(struct tlsrpt_dr_t* dr, tlsrpt_policy_type_t policy_type,
   dr->policy_type=policy_type;
 
   if(dr->policy_count==0) {
-    res = fprintf(dr->memstream, "\n,\"policies\":[{");
+    res = fprintf(dr->memstream, ",\"policies\":[{");
   } else {
-    res = fprintf(dr->memstream, "\n,{");
+    res = fprintf(dr->memstream, ",{");
   }
   if(res<0) return errorcode(dr, TLSRPT_ERR_FPRINTF_INITPOLICY+errno);
 
