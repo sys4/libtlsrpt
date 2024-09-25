@@ -241,6 +241,9 @@ s : failure_details.sending_mta_ip
 */
 
 static void reset_sub_memstreams(tlsrpt_dr_t *dr) {
+  /* sub_memstreams are resetted for a new policy, therefore also reset failure_count */
+  dr->failure_count=0;
+
   /* sub-memstream for policy strings */
   dr->separatorps="";
   dr->memstreamps=NULL;
@@ -264,7 +267,6 @@ static int tlsrpt_init_delivery_request_prepare_struct(tlsrpt_dr_t *dr, tlsrpt_c
   int res=0;
   dr->status=0;
   dr->con=con;
-  dr->failure_count=0;
   dr->policy_count=0;
 
   reset_sub_memstreams(dr);
