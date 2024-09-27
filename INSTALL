@@ -1,0 +1,10 @@
+libtlsrpt - Installation
+
+To install the libtlsrpt in /usr/local/lib and the header files to /usr/local/include:
+
+1. Change directory to the library´s source directory 
+2. Call "make install" with PREFIX set to "/usr/local"
+
+cd library/src
+make install PREFIX=/usr/local
+

@@ -16,12 +16,14 @@
 #    If not, see <http://www.gnu.org/licenses/>.
 
 CC=gcc
+INSTALL=install
+
 DEBUG=-g
-CFLAGS += -Wall -I ../include -O2 ${DEBUG}
+CFLAGS += -Wall -I ../include -fPIC -O2 ${DEBUG}
 LDFLAGS += -Wall -L. ${DEBUG}
 LDLIBS += libtlsrpt.a
 
-TARGETLIBS=libtlsrpt.a
+TARGETLIBS=libtlsrpt.a libtlsrpt.so
 TARGETBINS=demo
 TARGETS=${TARGETLIBS} ${TARGETBINS}
 
@@ -35,6 +37,9 @@ clean:
 libtlsrpt.a : libtlsrpt.o json-escape-initializer-list.o
 	ar -rcs $@ $^
 
+libtlsrpt.so : libtlsrpt.o json-escape-initializer-list.o
+	${CC} -shared -o $@ $^
+
 demo : demo.o libtlsrpt.a
 
 demo.o : ../include/tlsrpt.h
@@ -47,3 +52,6 @@ json-escape-initializer-list.c : create-json-escape-initializer-list
 create-json-escape-initializer-list : LDLIBS =
 
 
+install: ${TARGETLIBS} 
+	${INSTALL} -D -t ${DESTDIR}${PREFIX}/lib ${TARGETLIBS} 
+	${INSTALL} -D -t ${DESTDIR}${PREFIX}/include ../include/tlsrpt.h 
