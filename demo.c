@@ -19,6 +19,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <time.h>
 #include "tlsrpt.h"
 
@@ -56,6 +57,13 @@ void testrun() {
   res = tlsrpt_finish_delivery_request(&dr);
 
   printf("Result code is %d\n", res);
+  if(tlsrpt_error_code_is_internal(res)) {
+    printf("Internal library error :  %s\n", tlsrpt_strerror(res));
+  } else {
+    int e = tlsrpt_errno_from_error_code(res);
+    printf("%s : errno=%d : %s\n", tlsrpt_strerror(res), e, strerror(e));
+  }
+
   
   tlsrpt_close(&con);
 
