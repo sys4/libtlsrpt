@@ -19,7 +19,7 @@ CC=gcc
 INSTALL=install
 
 DEBUG=-g
-CFLAGS += -Wall -I ../include -fPIC -O2 ${DEBUG}
+CFLAGS += -Wall -I . -fPIC -O2 ${DEBUG}
 LDFLAGS += -Wall -L. ${DEBUG}
 LDLIBS += libtlsrpt.a
 
@@ -42,8 +42,8 @@ libtlsrpt.so : libtlsrpt.o json-escape-initializer-list.o
 
 demo : demo.o libtlsrpt.a
 
-demo.o : ../include/tlsrpt.h
-libtlsrpt.o : ../include/tlsrpt.h
+demo.o : tlsrpt.h
+libtlsrpt.o : tlsrpt.h
 
 
 json-escape-initializer-list.c : create-json-escape-initializer-list
@@ -54,4 +54,4 @@ create-json-escape-initializer-list : LDLIBS =
 
 install: ${TARGETLIBS} 
 	${INSTALL} -D -t ${DESTDIR}${PREFIX}/lib ${TARGETLIBS} 
-	${INSTALL} -D -t ${DESTDIR}${PREFIX}/include ../include/tlsrpt.h 
+	${INSTALL} -D -t ${DESTDIR}${PREFIX}/include tlsrpt.h 
