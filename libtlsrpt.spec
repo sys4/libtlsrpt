@@ -9,7 +9,7 @@ Source0:        libtlsrpt-0.5.0.tar.gz
 
 %description
 Interface library to implement TLSRPT reporting into an MTA and to generate and submit TLSRPT reports.
-The libtlsrpt library sends the data to the TLSRPT-receiver daemonn which collects and pre-aggregates the report data.
+The libtlsrpt library sends the data to the TLSRPT-collectd daemon which collects and pre-aggregates the report data.
 
 
 %package        devel

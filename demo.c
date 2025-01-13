@@ -23,7 +23,7 @@
 #include <time.h>
 #include "tlsrpt.h"
 
-#define SOCKET_NAME "/tmp/tlsrpt-receiver.socket"
+#define SOCKET_NAME "/tmp/tlsrpt-collectd.socket"
 
 void* specialmalloc(size_t size) {
   fprintf(stderr,"specialmalloc(%ld)\n",size);
