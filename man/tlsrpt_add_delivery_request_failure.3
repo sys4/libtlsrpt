@@ -1,0 +1,46 @@
+'\" t
+.\"     Title: tlsrpt_add_delivery_request_failure
+.\"    Author: Boris Lohner
+.\" Generator: Asciidoctor 1.5.6.1
+.\"      Date: 2024-11-06
+.\"    Manual: tlsrpt_add_delivery_request_failure
+.\"    Source: tlsrpt_add_delivery_request_failure
+.\"  Language: English
+.\"
+.TH "TLSRPT_ADD_DELIVERY_REQUEST_FAILURE" "3" "2024-11-06" "tlsrpt_add_delivery_request_failure" "tlsrpt_add_delivery_request_failure"
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.ss \n[.ss] 0
+.nh
+.ad l
+.de URL
+\\$2 \(laURL: \\$1 \(ra\\$3
+..
+.if \n[.g] .mso www.tmac
+.LINKSTYLE blue R < >
+.SH "NAME"
+tlsrpt_add_delivery_request_failure \- adds a failure to the current policy
+.SH "SYNOPSIS"
+.sp
+#include <tlsrpt.h>
+.sp
+int tlsrpt_add_delivery_request_failure(struct tlsrpt_dr_t* dr, tlsrpt_failure_t failure_code, const char* sending_mta_ip, const char* receiving_mx_hostname, const char* receiving_mx_helo, const char* receiving_ip, const char* additional_information, const char* failure_reason_code)
+.SH "DESCRIPTION"
+.sp
+The \f[CR]tlsrpt_add_delivery_request_failure\fP function adds a failure to the current policy.
+Multiple failures can be added within a policy.
+.sp
+Some of the parameters may be NULL and in this case will be ommitted in the datagram.
+.SH "RETURN VALUE"
+.sp
+The tlsrpt_add_delivery_request_failure function returns 0 on success and a combined error code on failure.
+The combined error code can be analyzed with the \fItlsrpt_strerror\fP function.
+.SH "SEE ALSO"
+.sp
+\fBtlsrpt_strerror\fP(3), \fBtlsrpt_error_code_is_internal\fP(3)
+.SH "AUTHOR(S)"
+.sp
+\fBBoris Lohner\fP
+.RS 4
+Author(s).
+.RE

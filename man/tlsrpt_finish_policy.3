@@ -1,0 +1,62 @@
+'\" t
+.\"     Title: tlsrpt_finish_policy
+.\"    Author: Boris Lohner
+.\" Generator: Asciidoctor 1.5.6.1
+.\"      Date: 2024-11-06
+.\"    Manual: tlsrpt_finish_policy
+.\"    Source: tlsrpt_finish_policy
+.\"  Language: English
+.\"
+.TH "TLSRPT_FINISH_POLICY" "3" "2024-11-06" "tlsrpt_finish_policy" "tlsrpt_finish_policy"
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.ss \n[.ss] 0
+.nh
+.ad l
+.de URL
+\\$2 \(laURL: \\$1 \(ra\\$3
+..
+.if \n[.g] .mso www.tmac
+.LINKSTYLE blue R < >
+.SH "NAME"
+tlsrpt_finish_policy \- finishes a policy within a delivery request
+.SH "SYNOPSIS"
+.sp
+#include <tlsrpt.h>
+.sp
+int tlsrpt_finish_policy(struct tlsrpt_dr_t* dr, tlsrpt_final_result_t final_result)
+.SH "DESCRIPTION"
+.sp
+The \f[CR]tlsrpt_finish_policy\fP function finishes a policy within a delivery request.
+It frees all the ressources allocated by \f[CR]tlsrpt_init_policy\fP.
+Every call to \f[CR]tlsrpt_init_policy\fP must be matched by a call to \f[CR]tlsrpt_finish_policy\fP!
+.if n \{\
+.sp
+.\}
+.RS 4
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.br
+.ps +1
+.B Note
+.ps -1
+.br
+.sp
+No plausibility checks are done by the library regarding the number of failures added to this policy and the final result.
+It is just as well possible to finish a poliy as \f[CR]TLSRPT_FINAL_FAILURE\fP with no failures added at all, as it is possible to finish a poliy as \f[CR]TLSRPT_FINAL_SUCCESS\fP with one or more failures added.
+.sp .5v
+.RE
+.SH "RETURN VALUE"
+.sp
+The tlsrpt_finish_policy function returns 0 on success and a combined error code on failure.
+The combined error code can be analyzed with the \fItlsrpt_strerror\fP function.
+.SH "SEE ALSO"
+.sp
+\fBtlsrpt_init_policy\fP(3), \fBtlsrpt_strerror\fP(3), \fBtlsrpt_error_code_is_internal\fP(3)
+.SH "AUTHOR(S)"
+.sp
+\fBBoris Lohner\fP
+.RS 4
+Author(s).
+.RE
