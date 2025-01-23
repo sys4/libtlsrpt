@@ -1,11 +1,11 @@
 Name:           libtlsrpt
-Version:        0.5.0 
+Version:        0.5.0rc1
 Release:        1%{?dist}
 Summary:        Interface library to implement TLSRPT reporting into an MTA and to generate and submit TLSRPT reports.
 
 License:        GPLv3+
 URL:            https://github.com/sys4/tlsrpt
-Source0:        libtlsrpt-0.5.0.tar.gz 
+Source0:        libtlsrpt-0.5.0rc1.tar.gz
 
 %description
 Interface library to implement TLSRPT reporting into an MTA and to generate and submit TLSRPT reports.
