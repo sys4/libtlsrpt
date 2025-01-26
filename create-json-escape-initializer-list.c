@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2024 sys4 AG
+    Copyright (C) 2024-2025 sys4 AG
     Author Boris Lohner bl@sys4.de
 
     This program is free software: you can redistribute it and/or modify
@@ -21,7 +21,7 @@
 
 void print_license() {
   printf("/*\n\
-    Copyright (C) 2024 sys4 AG\n\
+    Copyright (C) 2024-2025 sys4 AG\n\
     Author Boris Lohner bl@sys4.de\n\
 \n\
     This program is free software: you can redistribute it and/or modify\n\
