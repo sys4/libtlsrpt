@@ -1,17 +1,22 @@
-libtlsrpt - Installation
-************************
+# Installation
 
-Create ./configure if missing
-=============================
-On development branches ./configure is not provided.
-If ./configure does not exist, bootstrap the GNU Autotools toolchain by calling:
-    autoreconf --verbose  --install --force
+## Creating ./configure
 
+On development branches `./configure` is not provided. If `./configure` does
+not exist, bootstrap the GNU Autotools toolchain like this:
 
-Basic Installation
-==================
-To install the libtlsrpt in /usr/local/lib and the header files to /usr/local/include:
-    ./configure 
-    make
-    make install 
+```
+$ autoreconf --verbose  --install --force
+```
+
+## Basic Installation
+
+In order to install the libtlsrpt to `/usr/local/lib` and the header files to
+`/usr/local/include` run the following command sequence:
+
+```
+$ ./configure 
+$ make
+$ make install 
+```
  
