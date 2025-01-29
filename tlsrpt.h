@@ -97,7 +97,7 @@ int tlsrpt_add_delivery_request_failure(struct tlsrpt_dr_t* dr, tlsrpt_failure_t
 /*
 All TLSRPT functions return 0 on success or an individual error code:
 - errors detected within the TLSRPT c library are returned within the TLSRPT_ERR_TLSRPT number block listed below
-- errors from standard c library functions are returned as the errno encountered plus one of these constants to identify the syscall that yielded the error and the tlsrpt library function where it occured:
+- errors from standard c library functions are returned as the errno encountered plus one of these constants to identify the syscall that yielded the error and the tlsrpt library function where it occurred:
 */
 #define TLSRPT_ERR_SOCKET 11000
 #define TLSRPT_ERR_CLOSE 12000
