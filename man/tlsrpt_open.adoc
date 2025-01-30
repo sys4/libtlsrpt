@@ -1,0 +1,38 @@
+= tlsrpt_open(3)
+Boris Lohner
+v0.5.0
+:doctype: manpage
+:manmanual: tlsrpt_open
+:mansource: tlsrpt_open
+:man-linkstyle: pass:[blue R < >]
+
+== Name
+
+tlsrpt_open - `tlsrpt_open` allocates and initializes the `struct tlsrpt_connection_t` object
+
+== Synopsis
+
+#include <tlsrpt.h>
+
+int tlsrpt_open(struct tlsrpt_connection_t** pcon, const char* socketname)
+
+== Description
+
+The function `tlsrpt_open` allocates and initializes the `struct tlsrpt_connection_t` object.
+This function creates the socket and initializes the destination socket address of the TLSRPT collectd.
+There is no actual connection internally, the socket is a connection-less datagram socket.
+
+
+== Return value
+
+The tlsrpt_open function returns 0 on success and a combined error code on failure.
+The combined error code can be analyzed with the _tlsrpt_strerror_ function.
+
+== See also
+man:tlsrpt_close[3], man:tlsrpt_strerror[3], man:tlsrpt_error_code_is_internal[3]
+
+
+
+
+
+

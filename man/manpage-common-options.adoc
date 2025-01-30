@@ -1,0 +1,29 @@
+=== General options
+
+*--config_file*=_filename_::
+  Read options from the section {varpar-configsection} of the INI-style configuration file _filename_.
+  Environment variables override setings from the configurstion file and command line options override both.
+
+*--help*::
+  Print a help message describing all options.
+
+ifdef::varpar-daemonname[]
+*--pidfilename*=_path_::
+Specifies the file that contains the process ID of the {varpar-daemonname} daemon. An empty string will cause no PID file to be created.
+endif::[]
+
+=== Logging options
+
+*--logfilename*=_filename_::
+  Use _filename_ as log file.
+
+*--log_level*=_level_::
+  Set log level to _level_, allowed values: debug, info, warn, error.
+
+
+== Environment
+ 
+All config options except --help and --config_file can also be set via environment variables.
+The environment variable for a configuration option is the prefix {varpar-environmentprefix} followed by the configuration setting name in all caps.
+For example the --log_level option can instead by configured using the {varpar-environmentprefix}LOG_LEVEL environment variable.
+

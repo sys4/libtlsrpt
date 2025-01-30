@@ -1,0 +1,41 @@
+= tlsrpt_init_policy(3)
+Boris Lohner
+v0.5.0
+:doctype: manpage
+:manmanual: tlsrpt_init_policy
+:mansource: tlsrpt_init_policy
+:man-linkstyle: pass:[blue R < >]
+
+== Name
+
+tlsrpt_init_policy - initializes a new policy within an existing delivery request
+
+== Synopsis
+
+#include <tlsrpt.h>
+
+int tlsrpt_init_policy(struct tlsrpt_dr_t* dr, tlsrpt_policy_type_t policy_type, * const char* policydomainname)
+
+== Description
+
+The `tlsrpt_init_policy` function initializes a new policy within an existing delivery request.
+A delivery request must contain at least one policy.
+
+The policy must be properly completed by calls to some of the following functions and a final call to `tlsrpt_finish_policy`.
+
+NOTE: An unfinished policy after some properly finished policies will result in the whole delivery request datagram to fail and not being sent out at all, so the other already completed policies won´t be reported either!
+
+
+== Return value
+
+The tlsrpt_init_policy function returns 0 on success and a combined error code on failure.
+The combined error code can be analyzed with the _tlsrpt_strerror_ function.
+
+== See also
+man:tlsrpt_finish_policy[3], man:tlsrpt_strerror[3], man:tlsrpt_error_code_is_internal[3]
+
+
+
+
+
+

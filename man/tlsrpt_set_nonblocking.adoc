@@ -1,0 +1,35 @@
+= tlsrpt_set_nonblocking(3)
+Boris Lohner
+v0.5.0
+:doctype: manpage
+:manmanual: tlsrpt_set_nonblocking
+:mansource: tlsrpt_set_nonblocking
+:man-linkstyle: pass:[blue R < >]
+
+== Name
+
+tlsrpt_set_nonblocking - restores the `sendto` call within `tlsrpt_finish_delivery_request` to its default non-blocking behaviour
+
+== Synopsis
+
+#include <tlsrpt.h>
+
+void tlsrpt_set_nonblocking()
+
+== Description
+
+The `tlsrpt_set_nonblocking` function restores the `sendto` call within `tlsrpt_finish_delivery_request` to its default non-blocking behaviour.
+
+
+== Return value
+
+The tlsrpt_set_nonblocking function has no return value.
+
+== See also
+man:tlsrpt_set_blocking[3]
+
+
+
+
+
+

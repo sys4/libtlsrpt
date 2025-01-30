@@ -1,0 +1,40 @@
+= tlsrpt_add_delivery_request_failure(3)
+Boris Lohner
+v0.5.0
+:doctype: manpage
+:manmanual: tlsrpt_add_delivery_request_failure
+:mansource: tlsrpt_add_delivery_request_failure
+:man-linkstyle: pass:[blue R < >]
+
+== Name
+
+tlsrpt_add_delivery_request_failure - adds a failure to the current policy
+
+== Synopsis
+
+#include <tlsrpt.h>
+
+int tlsrpt_add_delivery_request_failure(struct tlsrpt_dr_t* dr, tlsrpt_failure_t failure_code, const char* sending_mta_ip, const char* receiving_mx_hostname, const char* receiving_mx_helo, const char* receiving_ip, const char* additional_information, const char* failure_reason_code)
+
+== Description
+
+The `tlsrpt_add_delivery_request_failure` function adds a failure to the current policy.
+Multiple failures can be added within a policy.
+
+Some of the parameters may be NULL and in this case will be omitted in the datagram.
+
+
+
+== Return value
+
+The tlsrpt_add_delivery_request_failure function returns 0 on success and a combined error code on failure.
+The combined error code can be analyzed with the _tlsrpt_strerror_ function.
+
+== See also
+man:tlsrpt_strerror[3], man:tlsrpt_error_code_is_internal[3]
+
+
+
+
+
+

@@ -1,0 +1,36 @@
+= tlsrpt_set_blocking(3)
+Boris Lohner
+v0.5.0
+:doctype: manpage
+:manmanual: tlsrpt_set_blocking
+:mansource: tlsrpt_set_blocking
+:man-linkstyle: pass:[blue R < >]
+
+== Name
+
+tlsrpt_set_blocking - changes the `sendto` call within `tlsrpt_finish_delivery_request` to be blocking
+
+== Synopsis
+
+#include <tlsrpt.h>
+
+void tlsrpt_set_blocking()
+
+== Description
+
+The `tlsrpt_set_blocking` function changes the `sendto` call within `tlsrpt_finish_delivery_request` to be blocking.
+The default is non-blocking.
+
+
+== Return value
+
+The tlsrpt_set_blocking function has no return value.
+
+== See also
+man:tlsrpt_set_nonblocking[3]
+
+
+
+
+
+

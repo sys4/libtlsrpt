@@ -1,0 +1,37 @@
+= tlsrpt_error_code_is_internal(3)
+Boris Lohner
+v0.5.0
+:doctype: manpage
+:manmanual: tlsrpt_error_code_is_internal
+:mansource: tlsrpt_error_code_is_internal
+:man-linkstyle: pass:[blue R < >]
+
+== Name
+
+tlsrpt_error_code_is_internal - returns if the error code is internal to the TLSRPT library
+
+== Synopsis
+
+#include <tlsrpt.h>
+
+int tlsrpt_error_code_is_internal(int errorcode)
+
+== Description
+
+The `tlsrpt_error_code_is_internal` function returns if the error code is internal to the TLSRPT library.
+`tlsrpt_error_code_is_internal` returns 1 if the error code describes an error internal to the TLSRPT library.
+`tlsrpt_error_code_is_internal` returns 0 if the error code is a composed error code combined of the C library function and the call site within the TLSRPT library and the errno value resulting from the failed call into the C library.
+
+
+== Return value
+
+The tlsrpt_error_code_is_internal function returns if the error code is internal to the TLSRPT library.
+
+== See also
+man:tlsrpt_strerror[3], man:tlsrpt_errno_from_error_code[3]
+
+
+
+
+
+

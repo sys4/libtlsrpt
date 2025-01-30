@@ -1,0 +1,40 @@
+= tlsrpt_set_malloc_and_free(3)
+Boris Lohner
+v0.5.0
+:doctype: manpage
+:manmanual: tlsrpt_set_malloc_and_free
+:mansource: tlsrpt_set_malloc_and_free
+:man-linkstyle: pass:[blue R < >]
+
+== Name
+
+tlsrpt_set_malloc_and_free - replaces the malloc implementation used within libtlsrpt
+
+== Synopsis
+
+#include <tlsrpt.h>
+
+void tlsrpt_set_malloc_and_free(void* (*malloc_function)(size_t size), void (*free_function)(void *ptr))
+
+== Description
+
+The `tlsrpt_set_malloc_and_free` function replaces the malloc implementation used within libtlsrpt.
+The replaced malloc is used within libtlsrpt only to allocate the `struct tlsrpt_connection_t` and `struct tlsrpt_dr_t` structures.
+Other malloc calls from within the C standard library are not affected.
+
+NOTE: This function must be called before any of the allocating functions `tlsrpt_open` and `tlsrpt_init_delivery_request` is called! Otherwise one malloc implementation tries to free  a pointer allocated by a different malloc implementation.
+
+
+
+== Return value
+
+The tlsrpt_set_malloc_and_free function has no return value.
+
+== See also
+man:tlsrpt_open[3], man:tlsrpt_init_delivery_request[3]
+
+
+
+
+
+

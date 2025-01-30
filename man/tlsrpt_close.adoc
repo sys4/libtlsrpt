@@ -1,0 +1,38 @@
+= tlsrpt_close(3)
+Boris Lohner
+v0.5.0
+:doctype: manpage
+:manmanual: tlsrpt_close
+:mansource: tlsrpt_close
+:man-linkstyle: pass:[blue R < >]
+
+== Name
+
+tlsrpt_close - `tlsrpt_close` closes the tlsrpt_connetion_t object
+
+== Synopsis
+
+#include <tlsrpt.h>
+
+int tlsrpt_close(struct tlsrpt_connection_t** pcon)
+
+== Description
+
+The function `tlsrpt_close` closes the tlsrpt_connetion_t object.
+`tlsrpt_close` closes the socket, resets the destination socket address to all zero bytes, deallocates the `struct tlsrpt_connection_t` and sets *pcon to `NULL`.
+
+
+
+== Return value
+
+The tlsrpt_close function returns 0 on success and a combined error code on failure.
+The combined error code can be analyzed with the _tlsrpt_strerror_ function.
+
+== See also
+man:tlsrpt_open[3], man:tlsrpt_strerror[3], man:tlsrpt_error_code_is_internal[3]
+
+
+
+
+
+

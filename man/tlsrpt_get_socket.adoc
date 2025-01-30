@@ -1,0 +1,37 @@
+= tlsrpt_get_socket(3)
+Boris Lohner
+v0.5.0
+:doctype: manpage
+:manmanual: tlsrpt_get_socket
+:mansource: tlsrpt_get_socket
+:man-linkstyle: pass:[blue R < >]
+
+== Name
+
+tlsrpt_get_socket - returns the socket file descriptor used within a `tlsrpt_connection_t`
+
+== Synopsis
+
+#include <tlsrpt.h>
+
+int tlsrpt_get_socket(truct tlsrpt_connection_t* con)
+
+== Description
+
+The `tlsrpt_get_socket` function returns the socket file descriptor used within a `tlsrpt_connection_t`.
+This can be useful to set socket options.
+
+
+
+== Return value
+
+The tlsrpt_get_socket function returns the socket file descriptor used within a tlsrpt_connection_t.
+
+== See also
+man:tlsrpt_strerror[3], man:tlsrpt_error_code_is_internal[3]
+
+
+
+
+
+

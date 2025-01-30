@@ -1,0 +1,37 @@
+= tlsrpt_strerror(3)
+Boris Lohner
+v0.5.0
+:doctype: manpage
+:manmanual: tlsrpt_strerror
+:mansource: tlsrpt_strerror
+:man-linkstyle: pass:[blue R < >]
+
+== Name
+
+tlsrpt_strerror - returns a static string describing the error
+
+== Synopsis
+
+#include <tlsrpt.h>
+
+const char* tlsrpt_strerror(int errorcode)
+
+== Description
+
+The `tlsrpt_strerror` function returns a static string describing the error.
+If the error is not an internal error (`tlsrpt_error_code_is_internal` returns 0 in that case), the text describes the C library function that gave an error and for C library functions that get called from different places within the TLSRPT library, the calling function is mentioned in the description.
+The actual error has to be retrieved from the C library via the `strerror` function or its altrnatives.
+The errno value to be passed into the `strerror` function must be extracted from the error code via the `tlsrpt_errno_from_error_code` function.
+
+== Return value
+
+The tlsrpt_strerror function returns a static string describing the error.
+
+== See also
+man:tlsrpt_error_code_is_internal[3], man:tlsrpt_errno_from_error_code[3]
+
+
+
+
+
+
