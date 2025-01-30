@@ -470,16 +470,15 @@ int tlsrpt_get_socket(tlsrpt_connection_t* con) {
 }
 
 /* BEGIN DEBUG tools */
-int totalsenderr=0;
-int dbgnumber=999;
+static int dbgnumber=999;
 
-void debugdumpdatagram(const char* fn, const char* dgram) {
+static void debugdumpdatagram(const char* fn, const char* dgram) {
   FILE *dbg=fopen(fn,"w");
   fprintf(dbg,"%s",dgram);
   fclose(dbg);
 }
 
-void debug_datagram_hook(void* data) {
+static void debug_datagram_hook(void* data) {
   char dbgname[1024];
   snprintf(dbgname,1023,"/tmp/datagram-%02d",dbgnumber);
   debugdumpdatagram(dbgname,data);
