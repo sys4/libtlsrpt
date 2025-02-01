@@ -1,0 +1,30 @@
+# Maintainer: Klaus Tachtler <klaus@tachtler.net>
+
+# Usage: makepkg -p PKGBUILD.latest.git
+pkgname=libtlsrpt-git
+_gitname=libtlsrpt
+pkgver=latest
+pkgrel=1
+pkgdesc="Interface library to implement TLSRPT reporting into an MTA and to generate and submit TLSRPT reports."
+arch=('any')
+url="https://github.com/sys4/libtlsrpt"
+license=('LGPLv3+')
+makedepends=('git' 'autoconf')
+source=("git+https://github.com/sys4/$_gitname.git")
+sha256sums=('SKIP')
+
+prepare() {
+  cd "$srcdir/$_gitname"
+  autoreconf --verbose --install --force
+}
+
+build() {
+  cd "$srcdir/$_gitname"
+  ./configure --prefix=/usr --mandir=/usr/share/man
+  make
+}
+
+package() {
+  cd "$srcdir/$_gitname"
+  make DESTDIR="$pkgdir/" install
+}
