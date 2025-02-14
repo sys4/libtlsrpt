@@ -1,0 +1,52 @@
+/*
+    Copyright (C) 2024-2025 sys4 AG
+    Author Boris Lohner bl@sys4.de
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU Lesser General Public License as
+    published by the Free Software Foundation, either version 3 of the
+    License, or (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU Lesser General Public License for more details.
+
+    You should have received a copy of the GNU Lesser General Public
+    License along with this program.
+    If not, see <http://www.gnu.org/licenses/>.
+ */
+
+#ifndef _TLSRPT_VERSION_H
+#define _TLSRPT_VERSION_H
+
+#define TLSRPT_VERSION_MAJOR @TLSRPT_VERSION_MAJOR@
+#define TLSRPT_VERSION_MINOR @TLSRPT_VERSION_MINOR@
+#define TLSRPT_VERSION_PATCH @TLSRPT_VERSION_PATCH@
+/*
+  For production release packages:
+  TLSRPT_VERSION_IS_PRERELEASE is defined as 0
+  TLSRPT_VERSION_PRERELEASE is defined as the empty string ""
+
+  For pre-release packages:
+  TLSRPT_VERSION_IS_PRERELEASE is defined as 1
+  TLSRPT_VERSION_PRERELEASE is defined as a descriptiv string like "rc1" or "alpha3"
+  
+*/
+#define TLSRPT_VERSION_IS_PRERELEASE @TLSRPT_VERSION_IS_PRERELEASE@
+#define TLSRPT_VERSION_PRERELEASE "@TLSRPT_VERSION_PRERELEASE@"
+
+#define _TLSRPT_VERSION_XSTR(s) _TLSRPT_VERSION_STR(s)
+#define _TLSRPT_VERSION_STR(s) #s
+
+#if TLSRPT_VERSION_IS_PRERELEASE == 1
+#define _TLSRPT_VERSION_ADDENDUM "-" TLSRPT_VERSION_PRERELEASE
+#else
+#define _TLSRPT_VERSION_ADDENDUM ""
+#endif
+
+#define TLSRPT_VERSION_STRING "" _TLSRPT_VERSION_XSTR(TLSRPT_VERSION_MAJOR) "." _TLSRPT_VERSION_XSTR(TLSRPT_VERSION_MINOR) "." _TLSRPT_VERSION_XSTR(TLSRPT_VERSION_PATCH) _TLSRPT_VERSION_ADDENDUM
+
+
+
+#endif /* _TLSRPT_VERSION_H */
