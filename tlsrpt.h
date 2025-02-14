@@ -70,6 +70,7 @@ struct tlsrpt_dr_t;
 
 /* Compatibility check */
 int tlsrpt_version_check(int major, int minor, int patch);
+const char* tlsrpt_version();
 
 /* Handling of the connection */
 int tlsrpt_open(struct tlsrpt_connection_t** pcon, const char* socketname);

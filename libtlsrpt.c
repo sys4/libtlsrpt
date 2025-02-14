@@ -78,6 +78,10 @@ int tlsrpt_version_check(int major, int minor, int patch) {
   return 1;
 }
 
+/* Returns the library version */
+const char* tlsrpt_version() {
+  return TLSRPT_VERSION_STRING;
+}
 
 /* flag the current delivery request as failed if it wasn´t failed already and return the old or new error code */
 static int errorcode(tlsrpt_dr_t *dr, int errcode) {
