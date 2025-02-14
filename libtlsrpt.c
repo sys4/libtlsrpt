@@ -512,7 +512,7 @@ Calls to errorcode will record the errorcode in the tlsrpt_dr_t structure, but t
   /* Check if finish_policy was called properly and clean up left-overs otherwise */
   if(dr->memstreamps != NULL) {
     errorcode(dr, TLSRPT_ERR_TLSRPT_UNFINISHEDPOLICY);
-    tlsrpt_finish_policy(dr,TLSRPT_UNFINISHED_POLICY);
+    tlsrpt_finish_policy(dr,TLSRPT_FINAL_FAILURE);
   }
 
   if(dr->policy_count>0) {
