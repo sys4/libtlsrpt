@@ -68,6 +68,9 @@ typedef enum {
 struct tlsrpt_connection_t;
 struct tlsrpt_dr_t;
 
+/* Compatibility check */
+int tlsrpt_version_check(int major, int minor, int patch);
+
 /* Handling of the connection */
 int tlsrpt_open(struct tlsrpt_connection_t** pcon, const char* socketname);
 int tlsrpt_close(struct tlsrpt_connection_t** pcon);

@@ -71,6 +71,13 @@ extern const char *tlsrpt_json_escape_values[256];
 
 #define DEBUG if(0)
 
+/* Check if this library version is compatible with an MTA compiled for major.minor.patch */
+int tlsrpt_version_check(int major, int minor, int patch) {
+  if(major != TLSRPT_VERSION_MAJOR) return 0;
+  if(minor > TLSRPT_VERSION_MINOR) return 0;
+  return 1;
+}
+
 
 /* flag the current delivery request as failed if it wasn´t failed already and return the old or new error code */
 static int errorcode(tlsrpt_dr_t *dr, int errcode) {
