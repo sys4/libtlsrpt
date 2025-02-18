@@ -289,7 +289,9 @@ static int tlsrpt_init_delivery_request_prepare_struct(tlsrpt_dr_t *dr, tlsrpt_c
   if(dr->memstream==NULL) return errorcode(dr, TLSRPT_ERR_OPEN_MEMSTREAM_INITDR+errno);
   res=fprintf(dr->memstream, "{");
   if(res<0) return errorcode(dr, TLSRPT_ERR_FPRINTF_INITDR+errno);
-  res=write_first_attribute(dr->memstream, "d", domainname);
+  res=write_first_attribute(dr->memstream, "dpv", "1"); /* Datagram protocol version */
+  if(res<0) return errorcode(dr, TLSRPT_ERR_FPRINTF_INITDR+errno);
+  res=write_attribute(dr->memstream, "d", domainname);
   if(res<0) return errorcode(dr, TLSRPT_ERR_FPRINTF_INITDR+errno);
   res=write_attribute(dr->memstream, "pr", policyrecord);
   if(res<0) return errorcode(dr, TLSRPT_ERR_FPRINTF_INITDR+errno);
