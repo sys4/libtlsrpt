@@ -1,0 +1,37 @@
+= tlsrpt_version(3)
+Boris Lohner
+v0.5.0
+:doctype: manpage
+:manmanual: tlsrpt_version
+:mansource: tlsrpt_version
+:man-linkstyle: pass:[blue R < >]
+
+== Name
+
+tlsrpt_version - returns a static string describing the version of libtlsrpt
+
+== Synopsis
+
+#include <tlsrpt.h>
+
+const char* tlsrpt_version()
+
+== Description
+
+The `tlsrpt_version` function returns a static string describing the version of libtlsrpt.
+
+The string consists of major version, minor version, patch level and optionally a tag describing a pre-release version.
+
+
+== Return value
+
+The tlsrpt_version function returns a static string describing the version of libtlsrpt.
+
+== See also
+man:tlsrpt_version_check[3]
+
+
+
+
+
+

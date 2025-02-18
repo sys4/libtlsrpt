@@ -34,6 +34,8 @@ TARGETS += tlsrpt_set_blocking.3
 TARGETS += tlsrpt_set_malloc_and_free.3
 TARGETS += tlsrpt_set_nonblocking.3
 TARGETS += tlsrpt_strerror.3
+TARGETS += tlsrpt_version.3
+TARGETS += tlsrpt_version_check.3
 
 .phony: all clean
 
