@@ -1,6 +1,6 @@
 lib_LTLIBRARIES = libtlsrpt.la
 libtlsrpt_la_SOURCES = json-escape-initializer-list.c  libtlsrpt.c
-include_HEADERS = tlsrpt.h
+include_HEADERS = tlsrpt.h tlsrpt_version.h
 man3_MANS = man/tlsrpt_add_delivery_request_failure.3 \
             man/tlsrpt_add_mx_host_pattern.3 \
             man/tlsrpt_add_policy_string.3 \
