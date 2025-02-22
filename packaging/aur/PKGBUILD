@@ -1,7 +1,7 @@
 # Maintainer: Klaus Tachtler <klaus@tachtler.net>
 
 pkgname=libtlsrpt
-pkgver=0.5.0rc1
+pkgver=0.5.0
 pkgrel=1
 pkgdesc="Interface library to implement TLSRPT reporting into an MTA and to generate and submit TLSRPT reports."
 arch=('any')
