@@ -3,7 +3,7 @@ Version:        0.5.0
 Release:        1%{?dist}
 Summary:        Interface library to implement TLSRPT reporting into an MTA and to generate and submit TLSRPT reports.
 
-License:        GPLv3+
+License:        LGPLv3+
 URL:            https://github.com/sys4/tlsrpt
 Source0:        libtlsrpt-0.5.0.tar.gz
 
