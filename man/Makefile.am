@@ -1,4 +1,4 @@
-man3_MANS = tlsrpt_add_delivery_request_failure.3 \
+dist_man3_MANS = tlsrpt_add_delivery_request_failure.3 \
             tlsrpt_add_mx_host_pattern.3 \
             tlsrpt_add_policy_string.3 \
             tlsrpt_cancel_delivery_request.3 \
