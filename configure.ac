@@ -6,6 +6,7 @@ AC_PROG_RANLIB
 LT_INIT
 AC_CONFIG_FILES([Makefile man/Makefile])
 AC_CONFIG_FILES([tlsrpt_version.h])
+AC_CONFIG_FILES([libtlsrpt.pc])
 
 TLSRPT_VERSION_MAJOR=0
 TLSRPT_VERSION_MINOR=5
