@@ -1,4 +1,4 @@
-AC_INIT([libtlsrpt], [0.5.1rc2], [bl@sys4.de])
+AC_INIT([libtlsrpt], [0.5.1], [bl@sys4.de])
 AM_INIT_AUTOMAKE([-Wall -Werror foreign])
 AC_PROG_CC
 AM_PROG_AR
